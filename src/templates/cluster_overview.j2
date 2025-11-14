@@ -1,0 +1,115 @@
+---
+title: "{{ cluster.name }}"
+description: "Proxmox VE cluster infrastructure overview"
+generated: "{{ generated }}"
+cluster_name: "{{ cluster.name }}"
+quorum: {{ cluster.quorum|lower }}
+total_nodes: {{ cluster.nodes }}
+online_nodes: {{ cluster.online_nodes }}
+offline_nodes: {{ cluster.offline_nodes }}
+total_vms: {{ cluster.total_vms }}
+total_containers: {{ cluster.total_containers }}
+pve_version: "{{ cluster.version or 'N/A' }}"
+---
+
+# {{ cluster.name }}
+
+## Cluster Overview
+
+**Proxmox VE Version:** {{ cluster.version or 'N/A' }}
+**Quorum Status:** {{ '✓ Active' if cluster.quorum else '✗ Inactive' }}
+
+## Infrastructure Summary
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ cluster.nodes }}</div>
+    <div className="text-sm text-gray-600">Nodes</div>
+    <div className="text-xs">{{ cluster.online_nodes }} online, {{ cluster.offline_nodes }} offline</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ cluster.total_vms }}</div>
+    <div className="text-sm text-gray-600">Virtual Machines</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ cluster.total_containers }}</div>
+    <div className="text-sm text-gray-600">Containers</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ storage_pools|length }}</div>
+    <div className="text-sm text-gray-600">Storage Pools</div>
+  </div>
+</div>
+
+## Nodes
+
+{% if nodes %}
+| Node | Status | CPU | Memory |
+|------|--------|-----|--------|
+{% for node in nodes %}
+| [{{ node.node }}](./nodes/{{ node.node }}/overview.mdx) | {{ '🟢 Online' if node.status == 'online' else '🔴 Offline' }} | {{ node.maxcpu or 'N/A' }} cores | {{ node.maxmem|format_bytes }} |
+{% endfor %}
+{% else %}
+No nodes found in cluster.
+{% endif %}
+
+## Virtual Machines
+
+{% if vms %}
+**Total VMs:** {{ vms|length }}
+
+View all virtual machines: [Virtual Machines Index](./virtual-machines/index.mdx)
+
+### Quick Overview
+{% for vm in vms[:5] %}
+- **[{{ vm.name or 'VM-' ~ vm.vmid }}](./virtual-machines/{{ vm.vmid }}-{{ vm.name or 'vm' }}/overview.mdx)** (ID: {{ vm.vmid }}) - Node: {{ vm.node }}
+{% endfor %}
+{% if vms|length > 5 %}
+
+*...and {{ vms|length - 5 }} more. See the [full list](./virtual-machines/index.mdx).*
+{% endif %}
+{% else %}
+No virtual machines found in cluster.
+{% endif %}
+
+## Containers
+
+{% if containers %}
+**Total Containers:** {{ containers|length }}
+
+View all containers: [Containers Index](./containers/index.mdx)
+
+### Quick Overview
+{% for ct in containers[:5] %}
+- **[{{ ct.name or 'CT-' ~ ct.vmid }}](./containers/{{ ct.vmid }}-{{ ct.name or 'container' }}/overview.mdx)** (ID: {{ ct.vmid }}) - Node: {{ ct.node }}
+{% endfor %}
+{% if containers|length > 5 %}
+
+*...and {{ containers|length - 5 }} more. See the [full list](./containers/index.mdx).*
+{% endif %}
+{% else %}
+No containers found in cluster.
+{% endif %}
+
+## Storage
+
+{% if storage_pools %}
+**Total Storage Pools:** {{ storage_pools|length }}
+
+| Storage ID | Type | Total | Available | Nodes |
+|------------|------|-------|-----------|-------|
+{% for storage in storage_pools %}
+| {{ storage.storage }} | {{ storage.type }} | {{ storage.maxdisk|format_bytes }} | {{ storage.disk|format_bytes }} available | {{ storage.node if storage.node else 'Shared' }} |
+{% endfor %}
+
+View detailed storage information: [Storage Overview](./storage/index.mdx)
+{% else %}
+No storage pools found.
+{% endif %}
+
+---
+
+*Documentation generated: {{ generated }}*

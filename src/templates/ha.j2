@@ -1,0 +1,150 @@
+---
+title: "High Availability (HA)"
+description: "HA configuration and resources"
+generated: "{{ generated }}"
+ha_enabled: {{ ha_enabled|lower }}
+total_resources: {{ total_resources }}
+---
+
+# High Availability (HA)
+
+{% if ha_enabled %}
+**High Availability is configured in this cluster**
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_groups }}</div>
+    <div className="text-sm text-gray-600">HA Groups</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_resources }}</div>
+    <div className="text-sm text-gray-600">HA Resources</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">✓</div>
+    <div className="text-sm text-gray-600">HA Enabled</div>
+  </div>
+</div>
+
+## HA Groups
+
+**Total:** {{ total_groups }}
+
+{% if ha_groups %}
+| Group ID | Nodes | Restricted | No Failback | Comment |
+|----------|-------|------------|-------------|---------|
+{% for group in ha_groups %}
+| {{ group.group }} | {{ group.nodes|default('all') }} | {{ '✓' if group.restricted|default(0) == 1 else '✗' }} | {{ '✓' if group.nofailback|default(0) == 1 else '✗' }} | {{ group.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No HA groups configured - using default group*
+{% endif %}
+
+## HA Resources
+
+**Total:** {{ total_resources }}
+
+{% if ha_resources %}
+| SID | Type | State | Group | Max Restart | Max Relocate |
+|-----|------|-------|-------|-------------|--------------|
+{% for resource in ha_resources %}
+| {{ resource.sid }} | {{ resource.type|default('vm') }} | {{ resource.state|default('started') }} | {{ resource.group|default('default') }} | {{ resource.max_restart|default(1) }} | {{ resource.max_relocate|default(1) }} |
+{% endfor %}
+{% else %}
+*No resources configured for HA*
+{% endif %}
+
+## Resources by Group
+
+{% for group, resources in resources_by_group.items() %}
+### {{ group }}
+
+**Resources:** {{ resources|length }}
+
+| SID | Type | State | Max Restart | Max Relocate |
+|-----|------|-------|-------------|--------------|
+{% for resource in resources %}
+| {{ resource.sid }} | {{ resource.type|default('vm') }} | {{ resource.state|default('started') }} | {{ resource.max_restart|default(1) }} | {{ resource.max_relocate|default(1) }} |
+{% endfor %}
+
+{% endfor %}
+
+## HA Configuration
+
+### What is High Availability?
+
+Proxmox HA automatically restarts VMs/containers when:
+- A node fails
+- A service becomes unavailable
+- Manual relocation is triggered
+
+### HA States
+
+- **started**: Resource should be running
+- **stopped**: Resource should be stopped  - **ignored**: Resource is not managed by HA
+- **disabled**: Resource is temporarily disabled
+
+### HA Groups
+
+Groups define which nodes can run specific resources:
+- **Nodes**: List of nodes in priority order
+- **Restricted**: If true, resource cannot run outside group nodes
+- **No Failback**: If true, resource stays on current node even if preferred node comes back online
+
+### HA Resource Settings
+
+- **Max Restart**: Maximum restart attempts on same node
+- **Max Relocate**: Maximum relocation attempts to other nodes
+- **State**: Desired state of resource (started/stopped)
+
+{% else %}
+## HA Not Configured
+
+High Availability is not configured in this cluster.
+
+### What is Proxmox HA?
+
+Proxmox HA provides automatic failover for VMs and containers:
+- **Automatic restart** on node failure
+- **Watchdog integration** for service monitoring
+- **Fencing** to prevent split-brain scenarios
+- **Priority-based** resource distribution
+
+### Requirements for HA
+
+1. **Quorum**: At least 3 nodes recommended (or 2 nodes + QDevice)
+2. **Shared storage**: VMs/CTs must use shared storage
+3. **Watchdog**: Hardware or software watchdog
+4. **Network**: Reliable cluster network
+
+### Setting up HA
+
+1. Ensure cluster has quorum
+2. Configure shared storage for VMs/CTs
+3. Navigate to Datacenter → HA in Proxmox GUI
+4. Create HA groups (optional)
+5. Add resources (VMs/CTs) to HA management
+6. Configure resource settings (state, max_restart, etc.)
+
+### HA vs Backup
+
+- **HA**: Automatic failover (minutes of downtime)
+- **Backup**: Disaster recovery (hours/days of downtime)
+- **Both**: Use HA for availability + backups for disaster recovery
+
+{% endif %}
+
+## Related Documentation
+
+- [Cluster Overview](../index.mdx) - Cluster information
+- [Virtual Machines](../virtual-machines/index.mdx) - All VMs
+- [Containers](../containers/index.mdx) - All containers
+- [Storage Overview](../storage/index.mdx) - Shared storage
+
+---
+
+*Documentation generated: {{ generated }}*

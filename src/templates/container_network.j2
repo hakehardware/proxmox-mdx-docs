@@ -1,0 +1,165 @@
+---
+title: "Network: {{ hostname }} (CT {{ vmid }})"
+description: "Network configuration for container {{ hostname }}"
+generated: "{{ generated }}"
+vmid: {{ vmid }}
+hostname: "{{ hostname }}"
+node: "{{ node_name }}"
+---
+
+# {{ hostname }} - Network Configuration
+
+**Container ID:** {{ vmid }}
+**Node:** [{{ node_name }}](../../nodes/{{ node_name }}/overview.mdx)
+
+## Network Interfaces
+
+{% if network_interfaces %}
+**Total Interfaces:** {{ network_interfaces|length }}
+
+{% for iface in network_interfaces %}
+### {{ iface.interface }}
+
+| Property | Value |
+|----------|-------|
+| Interface | {{ iface.interface }} |
+{% if iface.name %}
+| Name (in container) | {{ iface.name }} |
+{% endif %}
+{% if iface.bridge %}
+| Bridge | {{ iface.bridge }} |
+{% endif %}
+{% if iface.ip %}
+| IPv4 Address | {{ iface.ip }} |
+{% endif %}
+{% if iface.gw %}
+| IPv4 Gateway | {{ iface.gw }} |
+{% endif %}
+{% if iface.ip6 %}
+| IPv6 Address | {{ iface.ip6 }} |
+{% endif %}
+{% if iface.gw6 %}
+| IPv6 Gateway | {{ iface.gw6 }} |
+{% endif %}
+{% if iface.hwaddr %}
+| MAC Address | {{ iface.hwaddr }} |
+{% endif %}
+{% if iface.tag %}
+| VLAN Tag | {{ iface.tag }} |
+{% endif %}
+{% if iface.trunks %}
+| VLAN Trunks | {{ iface.trunks }} |
+{% endif %}
+{% if iface.mtu %}
+| MTU | {{ iface.mtu }} |
+{% endif %}
+{% if iface.rate %}
+| Rate Limit | {{ iface.rate }} MB/s |
+{% endif %}
+{% if iface.firewall %}
+| Firewall | {{ '✓ Enabled' if iface.firewall == '1' else '✗ Disabled' }} |
+{% endif %}
+{% if iface.link_down %}
+| Link Status | {{ '🔴 Down' if iface.link_down == '1' else '🟢 Up' }} |
+{% endif %}
+
+{% endfor %}
+
+{% if container_interfaces %}
+## Live Interface Status
+
+{% for iface in container_interfaces %}
+{% if iface.name != 'lo' %}
+### {{ iface.name }}
+
+| Property | Value |
+|----------|-------|
+| Interface | {{ iface.name }} |
+{% if iface.hwaddr %}
+| MAC Address | {{ iface.hwaddr }} |
+{% endif %}
+{% if iface.inet %}
+| IPv4 Address | {{ iface.inet }} |
+{% endif %}
+{% if iface.inet6 %}
+| IPv6 Address | {{ iface.inet6 }} |
+{% endif %}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% else %}
+No network interfaces configured.
+{% endif %}
+
+## Firewall Rules
+
+{% if firewall_rules %}
+**Total Rules:** {{ firewall_rules|length }}
+
+| Pos | Type | Action | Source | Dest | Protocol | Port | Comment |
+|-----|------|--------|--------|------|----------|------|---------|
+{% for rule in firewall_rules %}
+| {{ rule.pos }} | {{ rule.type }} | {{ rule.action }} | {{ rule.source or 'any' }} | {{ rule.dest or 'any' }} | {{ rule.proto or 'any' }} | {{ rule.dport or 'any' }} | {{ rule.comment or '' }} |
+{% endfor %}
+
+{% else %}
+No firewall rules configured for this container.
+{% endif %}
+
+## Network Diagram
+
+```
+Host Node: {{ node_name }}
+    │
+    ├─ Physical Interface
+    │       │
+{% for iface in network_interfaces %}
+    │       ├─ {{ iface.bridge or 'vmbr0' }}{% if iface.tag %} (VLAN {{ iface.tag }}){% endif %}
+    │       │       │
+    │       │       └─ CT {{ vmid }} - {{ iface.name or iface.interface }}
+    │       │           {% if iface.ip %}{{ iface.ip }}{% endif %}
+{% endfor %}
+```
+
+## Network Configuration Notes
+
+### IPv4 Configuration
+
+{% if network_interfaces %}
+{% for iface in network_interfaces %}
+{% if iface.ip %}
+- **{{ iface.name or iface.interface }}**: {{ iface.ip }}{% if iface.gw %} (gateway: {{ iface.gw }}){% endif %}
+{% endif %}
+{% endfor %}
+{% else %}
+No IPv4 addresses configured.
+{% endif %}
+
+### IPv6 Configuration
+
+{% if network_interfaces %}
+{% set has_ipv6 = namespace(value=false) %}
+{% for iface in network_interfaces %}
+{% if iface.ip6 %}
+{% set has_ipv6.value = true %}
+- **{{ iface.name or iface.interface }}**: {{ iface.ip6 }}{% if iface.gw6 %} (gateway: {{ iface.gw6 }}){% endif %}
+{% endif %}
+{% endfor %}
+{% if not has_ipv6.value %}
+No IPv6 addresses configured.
+{% endif %}
+{% else %}
+No IPv6 addresses configured.
+{% endif %}
+
+## Related Documentation
+
+- [Container Overview](./overview.mdx) - Back to container overview
+- [Node Network](../../nodes/{{ node_name }}/network.mdx) - Host node network
+- [Cluster Overview](../../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

@@ -1,0 +1,141 @@
+---
+title: "Node: {{ node.name }}"
+description: "Overview and configuration for Proxmox node {{ node.name }}"
+generated: "{{ generated }}"
+node_name: "{{ node.name }}"
+status: "{{ node.status }}"
+pve_version: "{{ node.pve_version or 'N/A' }}"
+kernel_version: "{{ node.kernel_version or 'N/A' }}"
+cpu_cores: {{ node.total_cpu_cores or 0 }}
+total_memory: {{ node.total_memory or 0 }}
+---
+
+# {{ node.name }}
+
+{% if node.description %}
+{{ node.description }}
+
+---
+
+{% endif %}
+## System Information
+
+**Status:** {{ '🟢 Online' if node.status == 'online' else '🔴 Offline' }}
+**Proxmox VE Version:** {{ node.pve_version or 'N/A' }}
+**Kernel Version:** {{ node.kernel_version or 'N/A' }}
+
+## Hardware Summary
+
+<div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ node.total_cpu_cores or 'N/A' }}</div>
+    <div className="text-sm text-gray-600">CPU Cores</div>
+    <div className="text-xs">{{ node.cpu_sockets or 0 }} socket(s)</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ node.total_memory|format_bytes }}</div>
+    <div className="text-sm text-gray-600">Total Memory</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ storage_pools|length }}</div>
+    <div className="text-sm text-gray-600">Storage Pools</div>
+  </div>
+</div>
+
+### CPU
+
+**Model:** {{ node.cpu_model or 'N/A' }}
+**Sockets:** {{ node.cpu_sockets or 'N/A' }}
+**Cores per Socket:** {{ node.cpu_cores or 'N/A' }}
+**Total Cores:** {{ node.total_cpu_cores or 'N/A' }}
+
+See detailed CPU information: [Hardware Details](./hardware.mdx)
+
+### Memory
+
+**Total RAM:** {{ node.total_memory|format_bytes }}
+
+See detailed memory information: [Hardware Details](./hardware.mdx)
+
+### Root Filesystem
+
+**Total:** {{ rootfs_total|format_bytes }}
+**Used:** {{ rootfs_used|format_bytes }}
+**Free:** {{ rootfs_free|format_bytes }}
+
+## Storage
+
+{% if storage_pools %}
+**Storage pools on this node:** {{ storage_pools|length }}
+
+| Storage ID | Type | Total | Available | Status |
+|------------|------|-------|-----------|--------|
+{% for pool in storage_pools %}
+| {{ pool.storage }} | {{ pool.type }} | {{ (pool.total or pool.maxdisk or 0)|format_bytes }} | {{ (pool.avail or 0)|format_bytes }} | {{ '🟢' if pool.active == 1 else '🔴' }} |
+{% endfor %}
+
+See all storage: [Storage Overview](../../storage/index.mdx)
+{% else %}
+No storage pools configured on this node.
+{% endif %}
+
+## Network
+
+{% if network_interfaces %}
+**Network interfaces:** {{ network_interfaces|length }}
+
+See detailed network configuration: [Network Details](./network.mdx)
+
+### Primary Interfaces
+{% for iface in network_interfaces[:5] %}
+{% if iface.type in ['eth', 'bridge'] %}
+- **{{ iface.iface }}** ({{ iface.type }})
+  {%- if iface.address %} - {{ iface.address }}{% if iface.netmask %}/{{ iface.netmask }}{% endif %}{% endif %}
+  {%- if iface.active == 1 %} 🟢{% else %} 🔴{% endif %}
+{% endif %}
+{% endfor %}
+{% else %}
+No network interfaces found.
+{% endif %}
+
+## Hosted Services
+
+### Virtual Machines
+
+{% if vms %}
+**VMs on this node:** {{ vms|length }}
+
+{% for vm in vms %}
+- **[{{ vm.name or 'VM-' ~ vm.vmid }}](../../virtual-machines/{{ vm.vmid }}-{{ vm.name or 'vm' }}/overview.mdx)** (ID: {{ vm.vmid }})
+  {%- if vm.maxmem %} - {{ vm.maxmem|format_bytes }} RAM{% endif %}
+  {%- if vm.maxcpu %}, {{ vm.maxcpu }} cores{% endif %}
+{% endfor %}
+{% else %}
+No virtual machines on this node.
+{% endif %}
+
+### Containers
+
+{% if containers %}
+**Containers on this node:** {{ containers|length }}
+
+{% for ct in containers %}
+- **[{{ ct.name or 'CT-' ~ ct.vmid }}](../../containers/{{ ct.vmid }}-{{ ct.name or 'container' }}/overview.mdx)** (ID: {{ ct.vmid }})
+  {%- if ct.maxmem %} - {{ ct.maxmem|format_bytes }} RAM{% endif %}
+  {%- if ct.maxcpu %}, {{ ct.maxcpu }} cores{% endif %}
+{% endfor %}
+{% else %}
+No containers on this node.
+{% endif %}
+
+## Related Documentation
+
+- [Hardware Details](./hardware.mdx) - Detailed CPU, memory, and disk information
+- [Network Configuration](./network.mdx) - Network interfaces and bridges
+- [Cluster Overview](../../index.mdx) - Return to cluster overview
+
+---
+
+*Documentation generated: {{ generated }}*

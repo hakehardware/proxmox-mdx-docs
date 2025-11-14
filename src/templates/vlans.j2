@@ -1,0 +1,75 @@
+---
+title: "VLAN Configuration"
+description: "VLAN configuration across the cluster"
+generated: "{{ generated }}"
+total_vlans: {{ total_vlans }}
+---
+
+# VLAN Configuration
+
+{% if total_vlans > 0 %}
+**Total VLANs:** {{ total_vlans }}
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_vlans }}</div>
+    <div className="text-sm text-gray-600">Total VLANs</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ vlan_ids|length }}</div>
+    <div className="text-sm text-gray-600">Unique VLAN IDs</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ vlans|selectattr('type', 'equalto', 'VLAN-aware bridge')|list|length }}</div>
+    <div className="text-sm text-gray-600">VLAN-aware Bridges</div>
+  </div>
+</div>
+
+## All VLANs
+
+| Node | Interface | VLAN ID | Type | Address | Details |
+|------|-----------|---------|------|---------|---------|
+{% for vlan in vlans %}
+| [{{ vlan.node }}](../nodes/{{ vlan.node }}/overview.mdx) | {{ vlan.interface }} | {{ vlan.vlan_id|default('N/A') }} | {{ vlan.type|default('VLAN') }} | {{ vlan.address|default('N/A') }} | {{ vlan.vlan_raw_device|default(vlan.bridge_ports)|default('-') }} |
+{% endfor %}
+
+## VLANs by ID
+
+{% for vlan_id, vlan_list in vlans_by_id.items() %}
+### VLAN {{ vlan_id }}
+
+**Nodes using this VLAN:** {{ vlan_list|length }}
+
+| Node | Interface | Address | Raw Device | Comments |
+|------|-----------|---------|------------|----------|
+{% for vlan in vlan_list %}
+| [{{ vlan.node }}](../nodes/{{ vlan.node }}/overview.mdx) | {{ vlan.interface }} | {{ vlan.address|default('N/A') }} | {{ vlan.vlan_raw_device|default('-') }} | {{ vlan.comments|default('-') }} |
+{% endfor %}
+
+{% endfor %}
+
+{% else %}
+## No VLANs Configured
+
+This cluster does not have any VLANs configured. All network traffic uses untagged interfaces.
+
+To configure VLANs:
+1. Create a VLAN-aware bridge in Proxmox
+2. Configure VLAN tags on VM/container network interfaces
+3. Or create dedicated VLAN interfaces on nodes
+
+{% endif %}
+
+## Related Documentation
+
+- [Network Overview](./index.mdx) - Network configuration
+- [IP Addressing Plan](./ip-addressing.mdx) - IP addresses
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

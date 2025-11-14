@@ -1,0 +1,108 @@
+---
+title: "Network Overview"
+description: "Network configuration and topology"
+generated: "{{ generated }}"
+total_nodes: {{ total_nodes }}
+total_bridges: {{ total_bridges }}
+total_vlans: {{ total_vlans }}
+---
+
+# Network Overview
+
+**Network Infrastructure Summary**
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_bridges }}</div>
+    <div className="text-sm text-gray-600">Bridges</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_bonds }}</div>
+    <div className="text-sm text-gray-600">Bonds</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_vlans }}</div>
+    <div className="text-sm text-gray-600">VLANs</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_physical }}</div>
+    <div className="text-sm text-gray-600">Physical Interfaces</div>
+  </div>
+</div>
+
+## Network by Node
+
+{% for node_net in node_networks %}
+### Node: {{ node_net.node }}
+
+[View Node Details](../nodes/{{ node_net.node }}/overview.mdx) | [Node Network Details](../nodes/{{ node_net.node }}/network.mdx)
+
+**Interfaces:** {{ node_net.interfaces|length }}
+
+| Interface | Type | Address | Gateway | Status |
+|-----------|------|---------|---------|--------|
+{% for iface in node_net.interfaces %}
+| {{ iface.iface }} | {{ iface.type|default('unknown') }} | {{ iface.address|default('N/A') }} | {{ iface.gateway|default('-') }} | {{ '✓ Active' if iface.active else '○ Inactive' }} |
+{% endfor %}
+
+{% endfor %}
+
+## Bridges
+
+**Total:** {{ total_bridges }}
+
+{% if all_bridges %}
+| Node | Bridge | Ports | Address | VLAN Aware |
+|------|--------|-------|---------|------------|
+{% for bridge in all_bridges %}
+| [{{ bridge.node }}](../nodes/{{ bridge.node }}/overview.mdx) | {{ bridge.iface }} | {{ bridge.bridge_ports or bridge['bridge-ports']|default('-') }} | {{ bridge.address|default('N/A') }} | {{ '✓' if bridge.bridge_vlan_aware or bridge['bridge-vlan-aware'] else '✗' }} |
+{% endfor %}
+{% else %}
+*No bridges configured*
+{% endif %}
+
+## Bonds
+
+**Total:** {{ total_bonds }}
+
+{% if all_bonds %}
+| Node | Bond | Slaves | Mode | Address |
+|------|------|--------|------|---------|
+{% for bond in all_bonds %}
+| [{{ bond.node }}](../nodes/{{ bond.node }}/overview.mdx) | {{ bond.iface }} | {{ bond.bond_slaves or bond['bond-slaves']|default('-') }} | {{ bond.bond_mode or bond['bond-mode']|default('N/A') }} | {{ bond.address|default('N/A') }} |
+{% endfor %}
+{% else %}
+*No bonds configured*
+{% endif %}
+
+## VLANs
+
+**Total:** {{ total_vlans }}
+
+{% if all_vlans %}
+See detailed VLAN documentation: [VLAN Configuration](./vlans.mdx)
+
+| Node | VLAN Interface | VLAN ID | Raw Device | Address |
+|------|----------------|---------|------------|---------|
+{% for vlan in all_vlans %}
+| [{{ vlan.node }}](../nodes/{{ vlan.node }}/overview.mdx) | {{ vlan.iface }} | {{ vlan['vlan-id'] or vlan.vlan_id|default('N/A') }} | {{ vlan['vlan-raw-device'] or vlan.vlan_raw_device|default('-') }} | {{ vlan.address|default('N/A') }} |
+{% endfor %}
+{% else %}
+*No VLANs configured*
+{% endif %}
+
+## Related Documentation
+
+- [IP Addressing Plan](./ip-addressing.mdx) - Complete IP address inventory
+- [VLAN Configuration](./vlans.mdx) - VLAN details{% if total_vlans > 0 %}{% endif %}
+- [SDN Configuration](./sdn.mdx) - Software Defined Networking
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

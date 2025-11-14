@@ -1,0 +1,77 @@
+---
+title: "Storage Assignments"
+description: "VM and container storage usage by pool"
+generated: "{{ generated }}"
+total_storages: {{ total_storages }}
+---
+
+# Storage Assignments
+
+This document shows which VMs and containers use which storage pools.
+
+**Total Storage Pools in Use:** {{ total_storages }}
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_storages }}</div>
+    <div className="text-sm text-gray-600">Storage Pools</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ assignments.values()|map(attribute='vms')|map('length')|sum }}</div>
+    <div className="text-sm text-gray-600">VM Disks</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ assignments.values()|map(attribute='containers')|map('length')|sum }}</div>
+    <div className="text-sm text-gray-600">Container Disks</div>
+  </div>
+</div>
+
+## Storage Assignments by Pool
+
+{% for storage_id, assignment in assignments.items() %}
+### {{ storage_id }}
+
+[View Storage Pool Details](./{{ storage_id }}.mdx)
+
+#### Virtual Machines ({{ assignment.vms|length }})
+
+{% if assignment.vms %}
+| VM ID | Name | Node | Disk | Size |
+|-------|------|------|------|------|
+{% for vm in assignment.vms %}
+| [{{ vm.vmid }}](../virtual-machines/{{ vm.vmid }}-{{ vm.name }}/overview.mdx) | {{ vm.name }} | [{{ vm.node }}](../nodes/{{ vm.node }}/overview.mdx) | {{ vm.disk }} | {{ vm.size|default('N/A') }} |
+{% endfor %}
+{% else %}
+*No VMs using this storage*
+{% endif %}
+
+#### Containers ({{ assignment.containers|length }})
+
+{% if assignment.containers %}
+| CT ID | Hostname | Node | Mount | Size |
+|-------|----------|------|-------|------|
+{% for ct in assignment.containers %}
+| [{{ ct.vmid }}](../containers/{{ ct.vmid }}-{{ ct.hostname }}/overview.mdx) | {{ ct.hostname }} | [{{ ct.node }}](../nodes/{{ ct.node }}/overview.mdx) | {{ ct.mount }} | {{ ct.size|default('N/A') }} |
+{% endfor %}
+{% else %}
+*No containers using this storage*
+{% endif %}
+
+---
+
+{% endfor %}
+
+## Related Documentation
+
+- [Storage Overview](./index.mdx) - All storage pools
+- [Virtual Machines](../virtual-machines/index.mdx) - All VMs
+- [Containers](../containers/index.mdx) - All containers
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

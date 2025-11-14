@@ -1,0 +1,151 @@
+---
+title: "Backup Policies"
+description: "Backup jobs and configuration"
+generated: "{{ generated }}"
+total_jobs: {{ total_jobs }}
+total_storages: {{ total_storages }}
+---
+
+# Backup Policies
+
+**Backup configuration for VMs and containers**
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_jobs }}</div>
+    <div className="text-sm text-gray-600">Backup Jobs</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_storages }}</div>
+    <div className="text-sm text-gray-600">Backup Storages</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ jobs_by_schedule|length }}</div>
+    <div className="text-sm text-gray-600">Schedules</div>
+  </div>
+</div>
+
+## Backup Jobs
+
+**Total:** {{ total_jobs }}
+
+{% if backup_jobs %}
+| ID | Schedule | Storage | Mode | Compress | Enabled | VMIDs |
+|----|----------|---------|------|----------|---------|-------|
+{% for job in backup_jobs %}
+| {{ job.id }} | {{ job.schedule|default('manual') }} | {{ job.storage }} | {{ job.mode|default('snapshot') }} | {{ job.compress|default('zstd') }} | {{ '✓' if job.enabled|default(1) == 1 else '✗' }} | {{ job.vmid|default('all') }} |
+{% endfor %}
+{% else %}
+*No backup jobs configured*
+
+**To create a backup job:**
+1. Navigate to Datacenter → Backup in Proxmox GUI
+2. Click "Add" to create a new backup job
+3. Configure schedule, storage, and VM selection
+4. Save the job
+
+**Backup modes:**
+- **Snapshot**: Create VM snapshot for backup (minimal downtime)
+- **Suspend**: Suspend VM during backup (consistent state)
+- **Stop**: Stop VM during backup (maximum consistency)
+{% endif %}
+
+## Backup Jobs by Schedule
+
+{% for schedule, jobs in jobs_by_schedule.items() %}
+### {{ schedule }}
+
+**Jobs:** {{ jobs|length }}
+
+| ID | Storage | VMIDs | Mode | Enabled |
+|----|---------|-------|------|---------|
+{% for job in jobs %}
+| {{ job.id }} | {{ job.storage }} | {{ job.vmid|default('all') }} | {{ job.mode|default('snapshot') }} | {{ '✓' if job.enabled|default(1) == 1 else '✗' }} |
+{% endfor %}
+
+{% endfor %}
+
+## Backup Jobs by Storage
+
+{% for storage, jobs in jobs_by_storage.items() %}
+### {{ storage }}
+
+{% if storage != 'unknown' %}
+[View Storage Details](../storage/{{ storage }}.mdx)
+{% endif %}
+
+**Jobs:** {{ jobs|length }}
+
+| ID | Schedule | VMIDs | Mode | Enabled |
+|----|----------|-------|------|---------|
+{% for job in jobs %}
+| {{ job.id }} | {{ job.schedule|default('manual') }} | {{ job.vmid|default('all') }} | {{ job.mode|default('snapshot') }} | {{ '✓' if job.enabled|default(1) == 1 else '✗' }} |
+{% endfor %}
+
+{% endfor %}
+
+## Backup Storage Pools
+
+**Total:** {{ total_storages }}
+
+{% if backup_storages %}
+| Storage ID | Type | Content Types | Capacity |
+|------------|------|---------------|----------|
+{% for storage in backup_storages %}
+| [{{ storage.storage }}](../storage/{{ storage.storage }}.mdx) | {{ storage.type|default('N/A') }} | {{ storage.content|default('N/A') }} | {% if storage.maxdisk %}{{ storage.maxdisk|format_bytes }}{% else %}N/A{% endif %} |
+{% endfor %}
+{% else %}
+*No storage pools configured for backups*
+
+**To add backup storage:**
+1. Navigate to Datacenter → Storage in Proxmox GUI
+2. Add or edit a storage pool
+3. Ensure "Backup" is selected in Content Types
+4. Configure retention and backup settings
+{% endif %}
+
+## Backup Best Practices
+
+### Recommended Schedules
+
+- **Daily**: Production VMs (e.g., `0 3 * * *` - 3 AM daily)
+- **Weekly**: Development VMs (e.g., `0 2 * * 0` - 2 AM Sunday)
+- **Hourly**: Critical systems (e.g., `0 * * * *` - Every hour)
+
+### Retention Settings
+
+Configure retention to balance storage usage and recovery points:
+- **keep-last**: Number of most recent backups to keep
+- **keep-hourly**: Hourly backups to retain
+- **keep-daily**: Daily backups to retain
+- **keep-weekly**: Weekly backups to retain
+- **keep-monthly**: Monthly backups to retain
+- **keep-yearly**: Yearly backups to retain
+
+### Backup Modes
+
+- **Snapshot**: Best for most VMs (minimal downtime)
+- **Suspend**: For VMs requiring consistency
+- **Stop**: For critical data consistency (maximum downtime)
+
+### Storage Considerations
+
+- Use **NFS/CIFS** for network backup storage
+- Use **PBS (Proxmox Backup Server)** for deduplication and encryption
+- Ensure sufficient storage capacity for retention policy
+- Store backups on separate physical storage from VMs
+
+## Related Documentation
+
+- [Storage Overview](../storage/index.mdx) - Storage pools
+- [Virtual Machines](../virtual-machines/index.mdx) - All VMs
+- [Containers](../containers/index.mdx) - All containers
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

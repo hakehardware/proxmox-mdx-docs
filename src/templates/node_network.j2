@@ -1,0 +1,219 @@
+---
+title: "Network: {{ node_name }}"
+description: "Network configuration for Proxmox node {{ node_name }}"
+generated: "{{ generated }}"
+node_name: "{{ node_name }}"
+---
+
+# {{ node_name }} - Network Configuration
+
+## Network Summary
+
+**Total Interfaces:** {{ all_interfaces|length }}
+- Physical Interfaces: {{ physical_interfaces|length }}
+- Bridges: {{ bridges|length }}
+- Bonds: {{ bonds|length }}
+- VLANs: {{ vlans|length }}
+
+{% if dns %}
+## DNS Configuration
+
+| Setting | Value |
+|---------|-------|
+{% if dns.dns1 %}
+| Primary DNS | {{ dns.dns1 }} |
+{% endif %}
+{% if dns.dns2 %}
+| Secondary DNS | {{ dns.dns2 }} |
+{% endif %}
+{% if dns.dns3 %}
+| Tertiary DNS | {{ dns.dns3 }} |
+{% endif %}
+{% if dns.search %}
+| Search Domain | {{ dns.search }} |
+{% endif %}
+{% endif %}
+
+## Physical Interfaces
+
+{% if physical_interfaces %}
+{% for iface in physical_interfaces %}
+### {{ iface.iface }}
+
+| Property | Value |
+|----------|-------|
+| Type | {{ iface.type }} |
+| Status | {{ '🟢 Active' if iface.active == 1 else '🔴 Inactive' }} |
+{% if iface.address %}
+| IP Address | {{ iface.address }}{% if iface.netmask %}/{{ iface.netmask }}{% endif %} |
+{% endif %}
+{% if iface.gateway %}
+| Gateway | {{ iface.gateway }} |
+{% endif %}
+{% if iface.address6 %}
+| IPv6 Address | {{ iface.address6 }}{% if iface.netmask6 %}/{{ iface.netmask6 }}{% endif %} |
+{% endif %}
+{% if iface.gateway6 %}
+| IPv6 Gateway | {{ iface.gateway6 }} |
+{% endif %}
+{% if iface.method %}
+| Method | {{ iface.method }} |
+{% endif %}
+{% if iface.method6 %}
+| IPv6 Method | {{ iface.method6 }} |
+{% endif %}
+{% if iface.autostart %}
+| Autostart | {{ '✓' if iface.autostart == 1 else '✗' }} |
+{% endif %}
+{% if iface.comments %}
+| Comments | {{ iface.comments }} |
+{% endif %}
+
+{% endfor %}
+{% else %}
+No physical interfaces configured.
+{% endif %}
+
+## Bridges
+
+{% if bridges %}
+{% for bridge in bridges %}
+### {{ bridge.iface }}
+
+| Property | Value |
+|----------|-------|
+| Type | Linux Bridge |
+| Status | {{ '🟢 Active' if bridge.active == 1 else '🔴 Inactive' }} |
+{% if bridge.address %}
+| IP Address | {{ bridge.address }}{% if bridge.netmask %}/{{ bridge.netmask }}{% endif %} |
+{% endif %}
+{% if bridge.gateway %}
+| Gateway | {{ bridge.gateway }} |
+{% endif %}
+{% if bridge.bridge_ports %}
+| Bridge Ports | {{ bridge.bridge_ports }} |
+{% endif %}
+{% if bridge.bridge_stp %}
+| STP | {{ bridge.bridge_stp }} |
+{% endif %}
+{% if bridge.bridge_fd %}
+| Forward Delay | {{ bridge.bridge_fd }} |
+{% endif %}
+{% if bridge.bridge_vlan_aware %}
+| VLAN Aware | {{ '✓' if bridge.bridge_vlan_aware == 1 else '✗' }} |
+{% endif %}
+{% if bridge.mtu %}
+| MTU | {{ bridge.mtu }} |
+{% endif %}
+{% if bridge.autostart %}
+| Autostart | {{ '✓' if bridge.autostart == 1 else '✗' }} |
+{% endif %}
+{% if bridge.comments %}
+| Comments | {{ bridge.comments }} |
+{% endif %}
+
+{% endfor %}
+{% else %}
+No bridges configured.
+{% endif %}
+
+## Bonds
+
+{% if bonds %}
+{% for bond in bonds %}
+### {{ bond.iface }}
+
+| Property | Value |
+|----------|-------|
+| Type | Bond |
+| Status | {{ '🟢 Active' if bond.active == 1 else '🔴 Inactive' }} |
+{% if bond.address %}
+| IP Address | {{ bond.address }}{% if bond.netmask %}/{{ bond.netmask }}{% endif %} |
+{% endif %}
+{% if bond.bond_mode %}
+| Bond Mode | {{ bond.bond_mode }} |
+{% endif %}
+{% if bond.slaves %}
+| Bond Slaves | {{ bond.slaves }} |
+{% endif %}
+{% if bond.bond_primary %}
+| Primary | {{ bond.bond_primary }} |
+{% endif %}
+{% if bond.bond_xmit_hash_policy %}
+| Hash Policy | {{ bond.bond_xmit_hash_policy }} |
+{% endif %}
+{% if bond.mtu %}
+| MTU | {{ bond.mtu }} |
+{% endif %}
+{% if bond.comments %}
+| Comments | {{ bond.comments }} |
+{% endif %}
+
+{% endfor %}
+{% else %}
+No bonds configured.
+{% endif %}
+
+## VLANs
+
+{% if vlans %}
+{% for vlan in vlans %}
+### {{ vlan.iface }}
+
+| Property | Value |
+|----------|-------|
+| Type | VLAN |
+| Status | {{ '🟢 Active' if vlan.active == 1 else '🔴 Inactive' }} |
+{% if vlan.address %}
+| IP Address | {{ vlan.address }}{% if vlan.netmask %}/{{ vlan.netmask }}{% endif %} |
+{% endif %}
+{% if vlan.vlan_id %}
+| VLAN ID | {{ vlan.vlan_id }} |
+{% endif %}
+{% if vlan.vlan_raw_device %}
+| Raw Device | {{ vlan.vlan_raw_device }} |
+{% endif %}
+{% if vlan.comments %}
+| Comments | {{ vlan.comments }} |
+{% endif %}
+
+{% endfor %}
+{% else %}
+No VLANs configured.
+{% endif %}
+
+{% if other_interfaces %}
+## Other Interfaces
+
+{% for iface in other_interfaces %}
+### {{ iface.iface }}
+
+| Property | Value |
+|----------|-------|
+| Type | {{ iface.type }} |
+| Status | {{ '🟢 Active' if iface.active == 1 else '🔴 Inactive' }} |
+{% if iface.address %}
+| IP Address | {{ iface.address }}{% if iface.netmask %}/{{ iface.netmask }}{% endif %} |
+{% endif %}
+{% if iface.comments %}
+| Comments | {{ iface.comments }} |
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+## Network Topology
+
+This node's network interfaces are used by the following VMs and containers:
+
+See: [Hosted Services](./overview.mdx#hosted-services)
+
+## Related Documentation
+
+- [Node Overview](./overview.mdx) - Back to node overview
+- [Hardware Details](./hardware.mdx) - Hardware specifications
+- [Cluster Overview](../../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

@@ -1,0 +1,45 @@
+# Environment variables (contains sensitive credentials)
+.env
+
+# Python virtual environment
+proxmox-docs-env/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Generated documentation output
+output/
+generation.log
+
+# Development and planning files (not for production)
+CLAUDE.md
+PHASE_*.md
+IMPLEMENTATION_PLAN.md
+MDX_DOCUMENTATION_PLAN.md
+API_ENDPOINTS_REFERENCE.md
+CONFIGURATION_DOCUMENTATION_PLAN.md
+WHAT_TO_DOCUMENT.md
+PROJECT_COMPLETE.md
+proxmox_hosts_documentation.md
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

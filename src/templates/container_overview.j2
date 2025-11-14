@@ -1,0 +1,197 @@
+---
+title: "CT {{ container.vmid }}: {{ container.hostname }}"
+description: "{{ container.description[:100] if container.description else 'Container ' ~ container.hostname }}"
+generated: "{{ generated }}"
+vmid: {{ container.vmid }}
+hostname: "{{ container.hostname }}"
+node: "{{ container.node }}"
+cores: {{ container.cores }}
+memory: {{ container.memory }}
+ostype: "{{ container.ostype or 'N/A' }}"
+unprivileged: {{ container.unprivileged|lower }}
+{% if container.tags %}
+tags:
+{% for tag in container.tags %}
+  - "{{ tag }}"
+{% endfor %}
+{% endif %}
+---
+
+# {{ container.hostname }} (CT {{ container.vmid }})
+
+**Location:** Node [{{ container.node }}](../../nodes/{{ container.node }}/overview.mdx)
+
+{% if container.description %}
+## Description
+
+{{ container.description }}
+
+---
+
+{% endif %}
+## Configuration Summary
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ container.cores }}</div>
+    <div className="text-sm text-gray-600">CPU Cores</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ container.memory|format_memory }}</div>
+    <div className="text-sm text-gray-600">Memory</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ 'Unprivileged' if container.unprivileged else 'Privileged' }}</div>
+    <div className="text-sm text-gray-600">Container Type</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ container.mount_points|length }}</div>
+    <div className="text-sm text-gray-600">Mount Points</div>
+  </div>
+</div>
+
+## Resource Allocation
+
+### CPU
+
+| Setting | Value |
+|---------|-------|
+| Cores | {{ container.cores }} |
+
+### Memory
+
+| Setting | Value |
+|---------|-------|
+| RAM | {{ container.memory|format_memory }} |
+{% if container.swap %}
+| Swap | {{ container.swap|format_memory }} |
+{% endif %}
+
+## System Configuration
+
+| Setting | Value |
+|---------|-------|
+| Operating System | {{ container.ostype or 'Unspecified' }} |
+| Architecture | {{ container.arch or 'amd64' }} |
+| Container Type | {{ 'Unprivileged' if container.unprivileged else 'Privileged' }} |
+| Start on Boot | {{ '✓ Yes' if container.onboot else '✗ No' }} |
+| Protection | {{ '✓ Enabled' if container.protection else '✗ Disabled' }} |
+
+{% if features %}
+## Container Features
+
+| Feature | Status |
+|---------|--------|
+{% for feature, value in features.items() %}
+| {{ feature }} | {{ '✓ Enabled' if value == '1' else value }} |
+{% endfor %}
+
+### Common Features Explained
+
+- **nesting**: Allows running containers inside this container
+- **keyctl**: Enables keyctl() syscall for systemd and other services
+- **fuse**: Allows mounting FUSE filesystems
+- **mount**: Allows mounting additional filesystems
+- **mknod**: Allows creating device nodes
+
+{% endif %}
+
+{% if container.tags %}
+### Tags
+
+{% for tag in container.tags %}
+- `{{ tag }}`
+{% endfor %}
+{% endif %}
+
+## Storage
+
+### Root Filesystem
+
+{% if container.rootfs %}
+| Property | Value |
+|----------|-------|
+| Storage Pool | {{ container.rootfs.storage or 'N/A' }} |
+| Volume | {{ container.rootfs.volume or 'N/A' }} |
+{% if container.rootfs.size %}
+| Size | {{ container.rootfs.size }} |
+{% endif %}
+{% if container.rootfs.acl %}
+| ACL | {{ '✓ Enabled' if container.rootfs.acl == '1' else '✗ Disabled' }} |
+{% endif %}
+{% if container.rootfs.quota %}
+| Quota | {{ '✓ Enabled' if container.rootfs.quota == '1' else '✗ Disabled' }} |
+{% endif %}
+{% if container.rootfs.ro %}
+| Read-Only | {{ '✓ Yes' if container.rootfs.ro == '1' else '✗ No' }} |
+{% endif %}
+{% else %}
+No rootfs information available.
+{% endif %}
+
+### Mount Points
+
+{% if container.mount_points %}
+**Total Mount Points:** {{ container.mount_points|length }}
+
+{% for mp in container.mount_points %}
+#### {{ mp.key }}
+
+| Property | Value |
+|----------|-------|
+| Interface | {{ mp.key }} |
+| Storage Pool | {{ mp.storage or 'N/A' }} |
+| Volume | {{ mp.volume or 'N/A' }} |
+{% if mp.mp %}
+| Mount Path | {{ mp.mp }} |
+{% endif %}
+{% if mp.size %}
+| Size | {{ mp.size }} |
+{% endif %}
+{% if mp.backup %}
+| Backup | {{ '✓ Yes' if mp.backup == '1' else '✗ No' }} |
+{% endif %}
+{% if mp.ro %}
+| Read-Only | {{ '✓ Yes' if mp.ro == '1' else '✗ No' }} |
+{% endif %}
+{% if mp.acl %}
+| ACL | {{ '✓ Enabled' if mp.acl == '1' else '✗ Disabled' }} |
+{% endif %}
+
+---
+
+{% endfor %}
+{% else %}
+No additional mount points configured.
+{% endif %}
+
+## Network
+
+See detailed network configuration: [Network Details](./network.mdx)
+
+## Advanced Configuration
+
+<details>
+<summary>View full configuration</summary>
+
+```yaml
+{% for key, value in config.items() %}
+{{ key }}: {{ value }}
+{% endfor %}
+```
+
+</details>
+
+## Related Documentation
+
+- [Network Configuration](./network.mdx) - Network interfaces and IPs
+- [Node: {{ container.node }}](../../nodes/{{ container.node }}/overview.mdx) - Host node information
+- [All Containers](../index.mdx) - Back to container list
+- [Cluster Overview](../../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

@@ -1,0 +1,47 @@
+---
+title: "Containers"
+description: "All LXC containers in the Proxmox cluster"
+generated: "{{ generated }}"
+total_containers: {{ total_containers }}
+---
+
+# Containers (LXC)
+
+**Total Containers:** {{ total_containers }}
+
+{% if containers %}
+## All Containers
+
+| CTID | Hostname | Node | CPU | Memory | Status |
+|------|----------|------|-----|--------|--------|
+{% for ct in containers %}
+| [{{ ct.vmid }}](./{{ ct.vmid }}-{{ ct.name or 'container' }}/overview.mdx) | **{{ ct.name or 'CT-' ~ ct.vmid }}** | [{{ ct.node }}](../nodes/{{ ct.node }}/overview.mdx) | {{ ct.maxcpu or 'N/A' }} cores | {{ ct.maxmem|format_memory }} | {{ ct.status or 'unknown' }} |
+{% endfor %}
+
+## Grouped by Node
+
+{% for node, node_containers in containers_by_node.items() %}
+### Node: {{ node }}
+
+**Containers on this node:** {{ node_containers|length }}
+
+{% for ct in node_containers %}
+- **[{{ ct.name or 'CT-' ~ ct.vmid }}](./{{ ct.vmid }}-{{ ct.name or 'container' }}/overview.mdx)** (ID: {{ ct.vmid }})
+  {%- if ct.maxcpu %} - {{ ct.maxcpu }} cores{% endif %}
+  {%- if ct.maxmem %}, {{ ct.maxmem|format_memory }}{% endif %}
+{% endfor %}
+
+{% endfor %}
+
+{% else %}
+No containers found in cluster.
+{% endif %}
+
+## Related Documentation
+
+- [Cluster Overview](../index.mdx) - Return to cluster overview
+- [Virtual Machines](../virtual-machines/index.mdx) - View VMs
+
+---
+
+*Documentation generated: {{ generated }}*

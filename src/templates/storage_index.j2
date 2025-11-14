@@ -1,0 +1,70 @@
+---
+title: "Storage Overview"
+description: "Storage pools and configuration"
+generated: "{{ generated }}"
+total_pools: {{ total_pools }}
+---
+
+# Storage Overview
+
+**Total Storage Pools:** {{ total_pools }}
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_pools }}</div>
+    <div className="text-sm text-gray-600">Total Pools</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ storage_by_type|length }}</div>
+    <div className="text-sm text-gray-600">Storage Types</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ storage_pools|selectattr('shared', 'equalto', true)|list|length }}</div>
+    <div className="text-sm text-gray-600">Shared Pools</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ storage_pools|selectattr('enabled', 'equalto', true)|list|length }}</div>
+    <div className="text-sm text-gray-600">Enabled</div>
+  </div>
+</div>
+
+## Storage Pools
+
+| Storage ID | Type | Content Types | Capacity | Shared | Status |
+|------------|------|---------------|----------|--------|--------|
+{% for pool in storage_pools %}
+| [{{ pool.storage_id }}](./{{ pool.storage_id }}.mdx) | {{ pool.type }} | {{ pool.content|join(', ') }} | {{ pool.total|default(0)|format_bytes }} | {{ '✓' if pool.shared else '✗' }} | {{ '✓ Enabled' if pool.enabled else '✗ Disabled' }} |
+{% endfor %}
+
+## Storage by Type
+
+{% for storage_type, pools in storage_by_type.items() %}
+### {{ storage_type|upper }}
+
+**Count:** {{ pools|length }} pool(s)
+
+| Storage ID | Content Types | Capacity | Nodes |
+|------------|---------------|----------|-------|
+{% for pool in pools %}
+| [{{ pool.storage_id }}](./{{ pool.storage_id }}.mdx) | {{ pool.content|join(', ') }} | {{ pool.total|default(0)|format_bytes }} | {{ pool.nodes|join(', ') if pool.nodes else 'All nodes' }} |
+{% endfor %}
+
+{% endfor %}
+
+## Storage Assignments
+
+See which VMs and containers use which storage: [Storage Assignments](./assignments.mdx)
+
+## Related Documentation
+
+- [Cluster Overview](../index.mdx) - Cluster information
+- [Storage Assignments](./assignments.mdx) - VM and container storage usage
+
+---
+
+*Documentation generated: {{ generated }}*

@@ -1,0 +1,129 @@
+---
+title: "Hardware: {{ node_name }}"
+description: "Hardware specifications for Proxmox node {{ node_name }}"
+generated: "{{ generated }}"
+node_name: "{{ node_name }}"
+---
+
+# {{ node_name }} - Hardware Details
+
+## CPU Configuration
+
+**Model:** {{ cpu_info.model or 'N/A' }}
+
+| Specification | Value |
+|---------------|-------|
+| CPU Model | {{ cpu_info.model or 'N/A' }} |
+| Sockets | {{ cpu_info.sockets or 'N/A' }} |
+| Cores per Socket | {{ cpu_info.cores or 'N/A' }} |
+| Threads per Core | {{ (cpu_info.cpus / (cpu_info.sockets * cpu_info.cores))|round(0)|int if cpu_info.sockets and cpu_info.cores else 'N/A' }} |
+| Total CPU Cores | {{ cpu_info.cpus or 'N/A' }} |
+| CPU Flags | {{ cpu_info.flags or 'N/A' }} |
+
+{% if cpu_info.hvm %}
+**Hardware Virtualization:** {{ '✓ Enabled' if cpu_info.hvm else '✗ Disabled' }}
+{% endif %}
+
+## Memory Configuration
+
+| Specification | Value |
+|---------------|-------|
+| Total RAM | {{ memory.total|format_bytes }} |
+{% if swap.total %}
+| Swap Total | {{ swap.total|format_bytes }} |
+{% endif %}
+
+### Memory Details
+
+**Total Memory:** {{ memory.total|format_bytes }}
+
+{% if swap.total and swap.total > 0 %}
+**Swap Configured:** {{ swap.total|format_bytes }}
+{% else %}
+**Swap:** Not configured
+{% endif %}
+
+## Root Filesystem
+
+| Specification | Value |
+|---------------|-------|
+| Total Space | {{ rootfs.total|format_bytes }} |
+| Used Space | {{ rootfs.used|format_bytes }} |
+| Free Space | {{ (rootfs.free or rootfs.avail)|format_bytes }} |
+| Usage | {{ ((rootfs.used / rootfs.total * 100)|round(1) if rootfs.total else 0) }}% |
+
+## Physical Disks
+
+{% if disks %}
+**Total disks:** {{ disks|length }}
+
+{% for disk in disks %}
+### {{ disk.devpath }}
+
+| Property | Value |
+|----------|-------|
+| Device | {{ disk.devpath }} |
+| Model | {{ disk.model or 'N/A' }} |
+| Serial | {{ disk.serial or 'N/A' }} |
+| Size | {{ disk.size|format_bytes }} |
+| Type | {{ disk.type or 'N/A' }} |
+| WWN | {{ disk.wwn or 'N/A' }} |
+{% if disk.health %}
+| SMART Health | {{ disk.health }} |
+{% endif %}
+{% if disk.wearout %}
+| Wearout | {{ disk.wearout }}% |
+{% endif %}
+
+{% endfor %}
+{% else %}
+No physical disk information available via API.
+{% endif %}
+
+## PCI Devices
+
+{% if pci_devices %}
+**Total PCI devices:** {{ pci_devices|length }}
+
+### Notable Devices
+
+{% for device in pci_devices %}
+{% if device.device and ('VGA' in device.device or 'Ethernet' in device.device or 'Network' in device.device or 'SATA' in device.device or 'NVMe' in device.device) %}
+- **{{ device.device }}**
+  - Vendor: {{ device.vendor or 'N/A' }}
+  - ID: {{ device.id }}
+  {% if device.iommugroup %}
+  - IOMMU Group: {{ device.iommugroup }}
+  {% endif %}
+{% endif %}
+{% endfor %}
+
+<details>
+<summary>View all PCI devices ({{ pci_devices|length }} total)</summary>
+
+| ID | Device | Vendor |
+|----|--------|--------|
+{% for device in pci_devices %}
+| {{ device.id }} | {{ device.device or 'Unknown' }} | {{ device.vendor or 'Unknown' }} |
+{% endfor %}
+
+</details>
+{% else %}
+No PCI device information available via API.
+{% endif %}
+
+## Storage Configuration
+
+For storage pool details, see: [Node Overview](./overview.mdx#storage)
+
+For cluster-wide storage, see: [Storage Overview](../../storage/index.mdx)
+
+## Related Documentation
+
+- [Node Overview](./overview.mdx) - Back to node overview
+- [Network Configuration](./network.mdx) - Network interfaces
+- [Cluster Overview](../../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

@@ -1,0 +1,47 @@
+---
+title: "Virtual Machines"
+description: "All virtual machines in the Proxmox cluster"
+generated: "{{ generated }}"
+total_vms: {{ total_vms }}
+---
+
+# Virtual Machines
+
+**Total VMs:** {{ total_vms }}
+
+{% if vms %}
+## All Virtual Machines
+
+| VMID | Name | Node | CPU | Memory | Status |
+|------|------|------|-----|--------|--------|
+{% for vm in vms %}
+| [{{ vm.vmid }}](./{{ vm.vmid }}-{{ vm.name or 'vm' }}/overview.mdx) | **{{ vm.name or 'VM-' ~ vm.vmid }}** | [{{ vm.node }}](../nodes/{{ vm.node }}/overview.mdx) | {{ vm.maxcpu or 'N/A' }} cores | {{ vm.maxmem|format_memory }} | {{ vm.status or 'unknown' }} |
+{% endfor %}
+
+## Grouped by Node
+
+{% for node, node_vms in vms_by_node.items() %}
+### Node: {{ node }}
+
+**VMs on this node:** {{ node_vms|length }}
+
+{% for vm in node_vms %}
+- **[{{ vm.name or 'VM-' ~ vm.vmid }}](./{{ vm.vmid }}-{{ vm.name or 'vm' }}/overview.mdx)** (ID: {{ vm.vmid }})
+  {%- if vm.maxcpu %} - {{ vm.maxcpu }} cores{% endif %}
+  {%- if vm.maxmem %}, {{ vm.maxmem|format_memory }}{% endif %}
+{% endfor %}
+
+{% endfor %}
+
+{% else %}
+No virtual machines found in cluster.
+{% endif %}
+
+## Related Documentation
+
+- [Cluster Overview](../index.mdx) - Return to cluster overview
+- [Containers](../containers/index.mdx) - View containers
+
+---
+
+*Documentation generated: {{ generated }}*

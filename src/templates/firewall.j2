@@ -1,0 +1,134 @@
+---
+title: "Firewall Rules"
+description: "Cluster firewall configuration"
+generated: "{{ generated }}"
+firewall_enabled: {{ firewall_enabled|lower }}
+total_rules: {{ total_rules }}
+---
+
+# Firewall Rules
+
+{% if firewall_enabled %}
+**Cluster firewall is enabled**
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_rules }}</div>
+    <div className="text-sm text-gray-600">Cluster Rules</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_groups }}</div>
+    <div className="text-sm text-gray-600">Security Groups</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_aliases }}</div>
+    <div className="text-sm text-gray-600">IP Aliases</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_ipsets }}</div>
+    <div className="text-sm text-gray-600">IP Sets</div>
+  </div>
+</div>
+
+## Firewall Options
+
+| Setting | Value |
+|---------|-------|
+| Enabled | {{ '✓ Yes' if firewall_enabled else '✗ No' }} |
+{% for key, value in firewall_options.items() %}
+| {{ key }} | {{ value }} |
+{% endfor %}
+
+## Cluster Firewall Rules
+
+**Total:** {{ total_rules }}
+
+{% if cluster_rules %}
+| Pos | Type | Action | Source | Destination | Protocol | DPort | Comment |
+|-----|------|--------|--------|-------------|----------|-------|---------|
+{% for rule in cluster_rules %}
+| {{ rule.pos|default('-') }} | {{ rule.type|default('IN') }} | {{ rule.action|upper }} | {{ rule.source|default('any') }} | {{ rule.dest|default('any') }} | {{ rule.proto|default('any') }} | {{ rule.dport|default('-') }} | {{ rule.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No cluster firewall rules configured*
+{% endif %}
+
+## Security Groups
+
+**Total:** {{ total_groups }}
+
+{% if security_groups %}
+| Group Name | Comment |
+|------------|---------|
+{% for group in security_groups %}
+| {{ group.group }} | {{ group.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No security groups configured*
+{% endif %}
+
+## IP Aliases
+
+**Total:** {{ total_aliases }}
+
+{% if aliases %}
+| Name | CIDR | Comment |
+|------|------|---------|
+{% for alias in aliases %}
+| {{ alias.name }} | {{ alias.cidr }} | {{ alias.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No IP aliases configured*
+{% endif %}
+
+## IP Sets
+
+**Total:** {{ total_ipsets }}
+
+{% if ipsets %}
+| Name | Comment |
+|------|---------|
+{% for ipset in ipsets %}
+| {{ ipset.name }} | {{ ipset.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No IP sets configured*
+{% endif %}
+
+{% else %}
+## Firewall Not Enabled
+
+The cluster firewall is currently disabled.
+
+Proxmox firewall features:
+- **Cluster-level rules**: Apply to all nodes
+- **Host-level rules**: Per-node firewall
+- **VM/CT-level rules**: Per-guest firewall
+- **Security groups**: Reusable rule sets
+- **IP aliases**: Named IP addresses/networks
+- **IP sets**: Groups of IP addresses
+
+To enable the firewall:
+1. Navigate to Datacenter → Firewall in Proxmox GUI
+2. Click on "Options"
+3. Enable the firewall
+4. Configure rules as needed
+5. Apply rules to nodes, VMs, and containers
+
+**Note:** Even with cluster firewall disabled, individual nodes, VMs, and containers may have their own firewall rules enabled.
+
+{% endif %}
+
+## Related Documentation
+
+- [Users & Permissions](./users-permissions.mdx) - Access control
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

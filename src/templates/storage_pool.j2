@@ -1,0 +1,130 @@
+---
+title: "Storage: {{ storage_id }}"
+description: "Storage pool {{ storage_id }}"
+generated: "{{ generated }}"
+storage_id: "{{ storage_id }}"
+storage_type: "{{ storage_type }}"
+shared: {{ shared|lower }}
+enabled: {{ enabled|lower }}
+---
+
+# Storage: {{ storage_id }}
+
+**Type:** {{ storage_type }}
+**Status:** {{ '✓ Enabled' if enabled else '✗ Disabled' }}
+**Shared:** {{ '✓ Yes' if shared else '✗ No' }}
+
+## Configuration Summary
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ storage_type|upper }}</div>
+    <div className="text-sm text-gray-600">Storage Type</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_capacity|format_bytes }}</div>
+    <div className="text-sm text-gray-600">Total Capacity</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ used_capacity|format_bytes }}</div>
+    <div className="text-sm text-gray-600">Used</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ available_capacity|format_bytes }}</div>
+    <div className="text-sm text-gray-600">Available</div>
+  </div>
+</div>
+
+## Capacity
+
+| Metric | Value | Percentage |
+|--------|-------|------------|
+| Total Capacity | {{ total_capacity|format_bytes }} | 100% |
+| Used | {{ used_capacity|format_bytes }} | {{ ((used_capacity / total_capacity * 100)|round(1)) if total_capacity > 0 else 0 }}% |
+| Available | {{ available_capacity|format_bytes }} | {{ ((available_capacity / total_capacity * 100)|round(1)) if total_capacity > 0 else 0 }}% |
+
+## Configuration
+
+| Setting | Value |
+|---------|-------|
+| Storage ID | {{ storage_id }} |
+| Type | {{ storage_type }} |
+| Shared | {{ '✓ Yes' if shared else '✗ No' }} |
+| Enabled | {{ '✓ Yes' if enabled else '✗ No' }} |
+| Content Types | {{ content_types|join(', ') }} |
+| Nodes | {{ nodes|join(', ') if nodes else 'All nodes' }} |
+{% if path %}
+| Path | `{{ path }}` |
+{% endif %}
+{% if pool %}
+| Pool | {{ pool }} |
+{% endif %}
+{% if maxfiles %}
+| Max Files | {{ maxfiles }} |
+{% endif %}
+{% if monhost %}
+| Monitor Host | {{ monhost }} |
+{% endif %}
+{% if krbd %}
+| KRBD | {{ '✓ Enabled' if krbd else '✗ Disabled' }} |
+{% endif %}
+
+## Content Types
+
+This storage pool supports the following content types:
+
+{% for content_type in content_types %}
+- **{{ content_type }}**{% if content_type == 'images' %} - Disk images (VM disks){% elif content_type == 'vztmpl' %} - Container templates{% elif content_type == 'iso' %} - ISO images{% elif content_type == 'backup' %} - Backup files{% elif content_type == 'rootdir' %} - Container root filesystems{% elif content_type == 'snippets' %} - Configuration snippets{% endif %}
+{% endfor %}
+
+## Usage
+
+### Virtual Machines ({{ using_vms|length }})
+
+{% if using_vms %}
+| VM ID | Name | Node | Disk | Size |
+|-------|------|------|------|------|
+{% for vm in using_vms %}
+| [{{ vm.vmid }}](../virtual-machines/{{ vm.vmid }}-{{ vm.name }}/overview.mdx) | {{ vm.name }} | [{{ vm.node }}](../nodes/{{ vm.node }}/overview.mdx) | {{ vm.disk }} | {{ vm.size|default('N/A') }} |
+{% endfor %}
+{% else %}
+*No VMs using this storage pool*
+{% endif %}
+
+### Containers ({{ using_containers|length }})
+
+{% if using_containers %}
+| CT ID | Hostname | Node | Mount | Size |
+|-------|----------|------|-------|------|
+{% for ct in using_containers %}
+| [{{ ct.vmid }}](../containers/{{ ct.vmid }}-{{ ct.hostname }}/overview.mdx) | {{ ct.hostname }} | [{{ ct.node }}](../nodes/{{ ct.node }}/overview.mdx) | {{ ct.mount }} | {{ ct.size|default('N/A') }} |
+{% endfor %}
+{% else %}
+*No containers using this storage pool*
+{% endif %}
+
+## Advanced Configuration
+
+<details>
+<summary>View full configuration</summary>
+
+```yaml
+{% for key, value in config.items() %}
+{{ key }}: {{ value }}
+{% endfor %}
+```
+
+</details>
+
+## Related Documentation
+
+- [Storage Overview](./index.mdx) - All storage pools
+- [Storage Assignments](./assignments.mdx) - VM and container storage usage
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

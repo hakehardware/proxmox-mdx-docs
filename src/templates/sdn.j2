@@ -1,0 +1,125 @@
+---
+title: "SDN Configuration"
+description: "Software Defined Networking configuration"
+generated: "{{ generated }}"
+sdn_enabled: {{ sdn_enabled|lower }}
+---
+
+# SDN Configuration
+
+{% if sdn_enabled %}
+**Software Defined Networking is enabled in this cluster.**
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_zones }}</div>
+    <div className="text-sm text-gray-600">SDN Zones</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_vnets }}</div>
+    <div className="text-sm text-gray-600">Virtual Networks</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">✓</div>
+    <div className="text-sm text-gray-600">SDN Enabled</div>
+  </div>
+</div>
+
+## SDN Zones
+
+**Total:** {{ total_zones }}
+
+{% if zones %}
+| Zone | Type | Nodes | Description |
+|------|------|-------|-------------|
+{% for zone in zones %}
+| {{ zone.zone }} | {{ zone.type|default('N/A') }} | {{ zone.nodes|default('All') }} | {{ zone.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No SDN zones configured*
+{% endif %}
+
+## Virtual Networks (VNets)
+
+**Total:** {{ total_vnets }}
+
+{% if vnets %}
+| VNet | Zone | Tag | Alias | Description |
+|------|------|-----|-------|-------------|
+{% for vnet in vnets %}
+| {{ vnet.vnet }} | {{ vnet.zone|default('N/A') }} | {{ vnet.tag|default('-') }} | {{ vnet.alias|default('-') }} | {{ vnet.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No virtual networks configured*
+{% endif %}
+
+## Configuration
+
+{% if zones or vnets %}
+### Zones Configuration
+
+<details>
+<summary>View zones configuration</summary>
+
+```yaml
+{% for zone in zones %}
+{{ zone.zone }}:
+{% for key, value in zone.items() %}
+  {{ key }}: {{ value }}
+{% endfor %}
+{% endfor %}
+```
+
+</details>
+
+### VNets Configuration
+
+<details>
+<summary>View vnets configuration</summary>
+
+```yaml
+{% for vnet in vnets %}
+{{ vnet.vnet }}:
+{% for key, value in vnet.items() %}
+  {{ key }}: {{ value }}
+{% endfor %}
+{% endfor %}
+```
+
+</details>
+{% endif %}
+
+{% else %}
+## SDN Not Configured
+
+Software Defined Networking (SDN) is not configured in this cluster.
+
+Proxmox SDN allows you to create virtual networks with advanced features:
+- **VLANs**: Virtual LAN segmentation
+- **VXLANs**: Layer 2 tunneling over Layer 3 networks
+- **EVPN**: Ethernet VPN for multi-site deployments
+- **Simple Zones**: Basic virtual network zones
+
+To enable SDN:
+1. Navigate to Datacenter → SDN in Proxmox GUI
+2. Create a Zone
+3. Create Virtual Networks (VNets)
+4. Assign VNets to VMs/containers
+5. Apply the SDN configuration
+
+{% endif %}
+
+## Related Documentation
+
+- [Network Overview](./index.mdx) - Network configuration
+- [VLAN Configuration](./vlans.mdx) - VLAN details
+- [IP Addressing Plan](./ip-addressing.mdx) - IP addresses
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

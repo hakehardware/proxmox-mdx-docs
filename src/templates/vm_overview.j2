@@ -1,0 +1,128 @@
+---
+title: "VM {{ vm.vmid }}: {{ vm.name }}"
+description: "{{ vm.description[:100] if vm.description else 'Virtual machine ' ~ vm.name }}"
+generated: "{{ generated }}"
+vmid: {{ vm.vmid }}
+name: "{{ vm.name }}"
+node: "{{ vm.node }}"
+cores: {{ vm.cores }}
+memory: {{ vm.memory }}
+ostype: "{{ vm.ostype or 'N/A' }}"
+{% if vm.tags %}
+tags:
+{% for tag in vm.tags %}
+  - "{{ tag }}"
+{% endfor %}
+{% endif %}
+---
+
+# {{ vm.name }} (VM {{ vm.vmid }})
+
+**Location:** Node [{{ vm.node }}](../../nodes/{{ vm.node }}/overview.mdx)
+
+{% if vm.description %}
+## Description
+
+{{ vm.description }}
+
+---
+
+{% endif %}
+## Configuration Summary
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ vm.cores * vm.sockets }}</div>
+    <div className="text-sm text-gray-600">CPU Cores</div>
+    <div className="text-xs">{{ vm.sockets }} socket(s)</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ vm.memory|format_memory }}</div>
+    <div className="text-sm text-gray-600">Memory</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ vm.bios|upper }}</div>
+    <div className="text-sm text-gray-600">Firmware</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ '✓' if vm.agent_enabled else '✗' }}</div>
+    <div className="text-sm text-gray-600">Guest Agent</div>
+  </div>
+</div>
+
+## Hardware Configuration
+
+### CPU
+
+| Setting | Value |
+|---------|-------|
+| Cores | {{ vm.cores }} |
+| Sockets | {{ vm.sockets }} |
+| Total vCPUs | {{ vm.cores * vm.sockets }} |
+| CPU Type | {{ vm.cpu_type }} |
+
+### Memory
+
+| Setting | Value |
+|---------|-------|
+| RAM | {{ vm.memory|format_memory }} |
+
+### System
+
+| Setting | Value |
+|---------|-------|
+| Operating System | {{ vm.ostype or 'Other' }} |
+| BIOS/Firmware | {{ vm.bios|upper }} |
+{% if vm.machine %}
+| Machine Type | {{ vm.machine }} |
+{% endif %}
+| Boot Order | {{ vm.boot_order or 'Default' }} |
+
+## Settings
+
+| Setting | Value |
+|---------|-------|
+| Start on Boot | {{ '✓ Yes' if vm.onboot else '✗ No' }} |
+| Protection | {{ '✓ Enabled' if vm.protection else '✗ Disabled' }} |
+| QEMU Guest Agent | {{ '✓ Enabled' if vm.agent_enabled else '✗ Disabled' }} |
+
+{% if vm.tags %}
+### Tags
+
+{% for tag in vm.tags %}
+- `{{ tag }}`
+{% endfor %}
+{% endif %}
+
+## Network & Storage
+
+- **Network Configuration:** See [Network Details](./network.mdx)
+- **Storage Configuration:** See [Storage Details](./storage.mdx)
+
+## Advanced Configuration
+
+<details>
+<summary>View full configuration</summary>
+
+```yaml
+{% for key, value in config.items() %}
+{{ key }}: {{ value }}
+{% endfor %}
+```
+
+</details>
+
+## Related Documentation
+
+- [Network Configuration](./network.mdx) - Network interfaces and IPs
+- [Storage Configuration](./storage.mdx) - Disks and storage pools
+- [Node: {{ vm.node }}](../../nodes/{{ vm.node }}/overview.mdx) - Host node information
+- [All Virtual Machines](../index.mdx) - Back to VM list
+- [Cluster Overview](../../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

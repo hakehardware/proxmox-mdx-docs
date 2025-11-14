@@ -1,0 +1,156 @@
+---
+title: "Users & Permissions"
+description: "User accounts and access control"
+generated: "{{ generated }}"
+total_users: {{ total_users }}
+total_groups: {{ total_groups }}
+total_roles: {{ total_roles }}
+---
+
+# Users & Permissions
+
+**Access control configuration for the cluster**
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_users }}</div>
+    <div className="text-sm text-gray-600">Users</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_groups }}</div>
+    <div className="text-sm text-gray-600">Groups</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_roles }}</div>
+    <div className="text-sm text-gray-600">Roles</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_tokens }}</div>
+    <div className="text-sm text-gray-600">API Tokens</div>
+  </div>
+</div>
+
+## Users
+
+**Total:** {{ total_users }}
+
+{% if users %}
+| User ID | Enabled | Groups | First Name | Last Name | Email |
+|---------|---------|--------|------------|-----------|-------|
+{% for user in users %}
+| {{ user.userid }} | {{ '✓' if user.enable|default(1) == 1 else '✗' }} | {{ user.groups|default('-') }} | {{ user.firstname|default('-') }} | {{ user.lastname|default('-') }} | {{ user.email|default('-') }} |
+{% endfor %}
+{% else %}
+*No users configured*
+{% endif %}
+
+## Users by Realm
+
+{% for realm, realm_users in users_by_realm.items() %}
+### {{ realm|upper }}
+
+**Users:** {{ realm_users|length }}
+
+| User ID | Enabled | Groups |
+|---------|---------|--------|
+{% for user in realm_users %}
+| {{ user.userid }} | {{ '✓' if user.enable|default(1) == 1 else '✗' }} | {{ user.groups|default('-') }} |
+{% endfor %}
+
+{% endfor %}
+
+## Groups
+
+**Total:** {{ total_groups }}
+
+{% if groups %}
+| Group ID | Comment |
+|----------|---------|
+{% for group in groups %}
+| {{ group.groupid }} | {{ group.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No groups configured*
+{% endif %}
+
+## Roles
+
+**Total:** {{ total_roles }}
+
+{% if roles %}
+| Role ID | Special | Privileges |
+|---------|---------|------------|
+{% for role in roles %}
+| {{ role.roleid }} | {{ '✓' if role.special else '-' }} | {{ role.privs|default('-') }} |
+{% endfor %}
+{% else %}
+*No roles configured*
+{% endif %}
+
+## API Tokens
+
+**Total:** {{ total_tokens }}
+
+{% if api_tokens %}
+| Token ID | User | Expire | Privileges | Comment |
+|----------|------|--------|------------|---------|
+{% for token in api_tokens %}
+| {{ token.tokenid }} | {{ token.user }} | {{ token.expire|default('Never') }} | {{ token.privsep|default('-') }} | {{ token.comment|default('-') }} |
+{% endfor %}
+{% else %}
+*No API tokens configured*
+{% endif %}
+
+## Access Control Lists (ACLs)
+
+**Total:** {{ total_acls }}
+
+{% if acls %}
+| Path | User/Group | Role | Propagate |
+|------|------------|------|-----------|
+{% for acl in acls %}
+| {{ acl.path }} | {{ acl.ugid }} | {{ acl.roleid }} | {{ '✓' if acl.propagate|default(1) == 1 else '✗' }} |
+{% endfor %}
+{% else %}
+*No ACLs configured*
+{% endif %}
+
+## Permission Structure
+
+Proxmox uses a path-based permission system:
+
+- **/** - Root path (cluster-wide permissions)
+- **/nodes/{node}** - Node-specific permissions
+- **/vms/{vmid}** - VM-specific permissions
+- **/storage/{storage}** - Storage-specific permissions
+- **/pool/{pool}** - Resource pool permissions
+
+## Built-in Roles
+
+Common Proxmox roles:
+
+- **Administrator**: Full access to all resources
+- **PVEAdmin**: Can do most administrative tasks except user management
+- **PVEVMAdmin**: Full VM administration
+- **PVEVMUser**: Can use VMs (start/stop/console)
+- **PVEAuditor**: Read-only access
+- **PVEDatastoreAdmin**: Storage administration
+- **PVEDatastoreUser**: Allocate disk space, view storage
+- **PVEPoolAdmin**: Pool administration
+- **PVEPoolUser**: Use resources in pool
+- **PVESysAdmin**: System administration (not VM management)
+- **PVEUserAdmin**: User and authentication management
+
+## Related Documentation
+
+- [Firewall Rules](./firewall.mdx) - Firewall configuration
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

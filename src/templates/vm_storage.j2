@@ -1,0 +1,183 @@
+---
+title: "Storage: {{ vm_name }} (VM {{ vmid }})"
+description: "Storage configuration for VM {{ vm_name }}"
+generated: "{{ generated }}"
+vmid: {{ vmid }}
+vm_name: "{{ vm_name }}"
+node: "{{ node_name }}"
+---
+
+# {{ vm_name }} - Storage Configuration
+
+**VM ID:** {{ vmid }}
+**Node:** [{{ node_name }}](../../nodes/{{ node_name }}/overview.mdx)
+
+{% if scsihw %}
+## Storage Controller
+
+**SCSI Controller:** {{ scsihw }}
+{% endif %}
+
+## Disks
+
+{% if disks %}
+**Total Disks:** {{ disks|length }}
+
+{% for disk in disks %}
+### {{ disk.interface }}
+
+| Property | Value |
+|----------|-------|
+| Interface | {{ disk.interface }} ({{ disk.disk_type }}) |
+| Storage Pool | {{ disk.storage or 'N/A' }} |
+| Volume | {{ disk.volume or 'N/A' }} |
+{% if disk.size %}
+| Size | {{ disk.size }} |
+{% endif %}
+{% if disk.format %}
+| Format | {{ disk.format }} |
+{% endif %}
+{% if disk.cache %}
+| Cache Mode | {{ disk.cache }} |
+{% endif %}
+{% if disk.discard %}
+| Discard | {{ disk.discard }} |
+{% endif %}
+{% if disk.ssd %}
+| SSD Emulation | {{ '✓ Yes' if disk.ssd == 'on' or disk.ssd == '1' else '✗ No' }} |
+{% endif %}
+{% if disk.backup %}
+| Backup | {{ '✓ Yes' if disk.backup == '1' else '✗ No' }} |
+{% endif %}
+{% if disk.replicate %}
+| Replicate | {{ '✓ Yes' if disk.replicate == '1' else '✗ No' }} |
+{% endif %}
+{% if disk.iothread %}
+| IO Thread | {{ '✓ Yes' if disk.iothread == 'on' or disk.iothread == '1' else '✗ No' }} |
+{% endif %}
+
+#### Performance Settings
+
+{% if disk.iops or disk.iops_rd or disk.iops_wr or disk.mbps or disk.mbps_rd or disk.mbps_wr %}
+| Metric | Value |
+|--------|-------|
+{% if disk.iops %}
+| IOPS Limit | {{ disk.iops }} |
+{% endif %}
+{% if disk.iops_rd %}
+| IOPS Read Limit | {{ disk.iops_rd }} |
+{% endif %}
+{% if disk.iops_wr %}
+| IOPS Write Limit | {{ disk.iops_wr }} |
+{% endif %}
+{% if disk.mbps %}
+| Throughput Limit | {{ disk.mbps }} MB/s |
+{% endif %}
+{% if disk.mbps_rd %}
+| Read Throughput Limit | {{ disk.mbps_rd }} MB/s |
+{% endif %}
+{% if disk.mbps_wr %}
+| Write Throughput Limit | {{ disk.mbps_wr }} MB/s |
+{% endif %}
+{% else %}
+No performance limits configured.
+{% endif %}
+
+---
+
+{% endfor %}
+
+## Storage Summary
+
+| Interface | Storage | Size | Format | Cache | SSD |
+|-----------|---------|------|--------|-------|-----|
+{% for disk in disks %}
+| {{ disk.interface }} | {{ disk.storage or 'N/A' }} | {{ disk.size or 'N/A' }} | {{ disk.format or 'N/A' }} | {{ disk.cache or 'default' }} | {{ '✓' if disk.ssd == 'on' or disk.ssd == '1' else '✗' }} |
+{% endfor %}
+
+{% else %}
+No disks configured.
+{% endif %}
+
+{% if cdroms %}
+## CD-ROM / ISO
+
+{% for cdrom in cdroms %}
+### {{ cdrom.interface }}
+
+| Property | Value |
+|----------|-------|
+| Interface | {{ cdrom.interface }} |
+| Storage | {{ cdrom.storage or 'N/A' }} |
+| ISO/Image | {{ cdrom.volume or 'None' }} |
+
+{% endfor %}
+{% endif %}
+
+## Storage Allocation
+
+{% if disks %}
+**Total allocated storage:**
+{% set total_size = namespace(value=0) %}
+{% for disk in disks %}
+{% if disk.size %}
+- {{ disk.interface }}: {{ disk.size }}
+{% endif %}
+{% endfor %}
+
+### By Storage Pool
+
+{% set pools = {} %}
+{% for disk in disks %}
+{% if disk.storage %}
+{% if disk.storage not in pools %}
+{% set _ = pools.update({disk.storage: []}) %}
+{% endif %}
+{% set _ = pools[disk.storage].append(disk) %}
+{% endif %}
+{% endfor %}
+
+{% for pool, pool_disks in pools.items() %}
+**{{ pool }}:**
+{% for disk in pool_disks %}
+- {{ disk.interface }}: {{ disk.size or 'N/A' }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+
+## Storage Configuration Best Practices
+
+{% if disks %}
+{% set has_ssd = namespace(value=false) %}
+{% set has_discard = namespace(value=false) %}
+{% set has_iothread = namespace(value=false) %}
+
+{% for disk in disks %}
+{% if disk.ssd == 'on' or disk.ssd == '1' %}
+{% set has_ssd.value = true %}
+{% endif %}
+{% if disk.discard == 'on' %}
+{% set has_discard.value = true %}
+{% endif %}
+{% if disk.iothread == 'on' or disk.iothread == '1' %}
+{% set has_iothread.value = true %}
+{% endif %}
+{% endfor %}
+
+- SSD Emulation: {{ '✓ Enabled' if has_ssd.value else '✗ Not enabled' }}
+- Discard/TRIM: {{ '✓ Enabled' if has_discard.value else '✗ Not enabled' }}
+- IO Threads: {{ '✓ Enabled' if has_iothread.value else '✗ Not enabled' }}
+{% endif %}
+
+## Related Documentation
+
+- [VM Overview](./overview.mdx) - Back to VM overview
+- [Network Configuration](./network.mdx) - Network details
+- [Node Storage](../../nodes/{{ node_name }}/overview.mdx#storage) - Host node storage
+- [Storage Overview](../../storage/index.mdx) - Cluster storage
+- [Cluster Overview](../../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

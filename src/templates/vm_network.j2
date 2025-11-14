@@ -1,0 +1,112 @@
+---
+title: "Network: {{ vm_name }} (VM {{ vmid }})"
+description: "Network configuration for VM {{ vm_name }}"
+generated: "{{ generated }}"
+vmid: {{ vmid }}
+vm_name: "{{ vm_name }}"
+node: "{{ node_name }}"
+---
+
+# {{ vm_name }} - Network Configuration
+
+**VM ID:** {{ vmid }}
+**Node:** [{{ node_name }}](../../nodes/{{ node_name }}/overview.mdx)
+
+## Network Interfaces
+
+{% if network_interfaces %}
+**Total Interfaces:** {{ network_interfaces|length }}
+
+{% for iface in network_interfaces %}
+### {{ iface.interface }}
+
+| Property | Value |
+|----------|-------|
+| Interface | {{ iface.interface }} |
+| Model | {{ iface.model or 'N/A' }} |
+| MAC Address | {{ iface.macaddr or 'N/A' }} |
+{% if iface.bridge %}
+| Bridge | {{ iface.bridge }} |
+{% endif %}
+{% if iface.tag %}
+| VLAN Tag | {{ iface.tag }} |
+{% endif %}
+{% if iface.rate %}
+| Rate Limit | {{ iface.rate }} MB/s |
+{% endif %}
+{% if iface.queues %}
+| Queues | {{ iface.queues }} |
+{% endif %}
+{% if iface.firewall %}
+| Firewall | {{ '✓ Enabled' if iface.firewall == '1' else '✗ Disabled' }} |
+{% endif %}
+{% if iface.link_down %}
+| Link Status | {{ '🔴 Down' if iface.link_down == '1' else '🟢 Up' }} |
+{% endif %}
+
+{% endfor %}
+
+{% if guest_network and guest_network.result %}
+## IP Addresses (from Guest Agent)
+
+{% for iface in guest_network.result %}
+{% if iface.name != 'lo' %}
+### {{ iface.name }}
+
+{% if iface['ip-addresses'] %}
+| Type | Address |
+|------|---------|
+{% for ip in iface['ip-addresses'] %}
+| {{ ip['ip-address-type'] }} | {{ ip['ip-address'] }}{% if ip.prefix %}/{{ ip.prefix }}{% endif %} |
+{% endfor %}
+{% else %}
+No IP addresses detected.
+{% endif %}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% else %}
+No network interfaces configured.
+{% endif %}
+
+## Firewall Rules
+
+{% if firewall_rules %}
+**Total Rules:** {{ firewall_rules|length }}
+
+| Pos | Type | Action | Source | Dest | Protocol | Port | Comment |
+|-----|------|--------|--------|------|----------|------|---------|
+{% for rule in firewall_rules %}
+| {{ rule.pos }} | {{ rule.type }} | {{ rule.action }} | {{ rule.source or 'any' }} | {{ rule.dest or 'any' }} | {{ rule.proto or 'any' }} | {{ rule.dport or 'any' }} | {{ rule.comment or '' }} |
+{% endfor %}
+
+{% else %}
+No firewall rules configured for this VM.
+{% endif %}
+
+## Network Diagram
+
+```
+Host Node: {{ node_name }}
+    │
+    ├─ Physical Interface
+    │       │
+{% for iface in network_interfaces %}
+    │       ├─ {{ iface.bridge or 'vmbr0' }}{% if iface.tag %} (VLAN {{ iface.tag }}){% endif %}
+    │       │       │
+    │       │       └─ VM {{ vmid }} - {{ iface.interface }} ({{ iface.macaddr or 'auto' }})
+{% endfor %}
+```
+
+## Related Documentation
+
+- [VM Overview](./overview.mdx) - Back to VM overview
+- [Storage Configuration](./storage.mdx) - Storage details
+- [Node Network](../../nodes/{{ node_name }}/network.mdx) - Host node network
+- [Cluster Overview](../../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*

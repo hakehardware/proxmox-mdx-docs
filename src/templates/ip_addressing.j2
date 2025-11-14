@@ -1,0 +1,96 @@
+---
+title: "IP Addressing Plan"
+description: "Complete IP address inventory across the cluster"
+generated: "{{ generated }}"
+total_ips: {{ total_ips }}
+---
+
+# IP Addressing Plan
+
+Complete inventory of all IP addresses across the cluster.
+
+**Total IP Addresses:** {{ total_ips }}
+
+## Summary
+
+<div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-6">
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ total_ips }}</div>
+    <div className="text-sm text-gray-600">Total IPs</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ subnets|length }}</div>
+    <div className="text-sm text-gray-600">Subnets</div>
+  </div>
+
+  <div className="stats-card">
+    <div className="text-2xl font-bold">{{ ip_assignments|selectattr('type', 'equalto', 'Node')|list|length }}</div>
+    <div className="text-sm text-gray-600">Node IPs</div>
+  </div>
+</div>
+
+## All IP Addresses
+
+| IP Address | Type | Name | Interface | Gateway | Description |
+|------------|------|------|-----------|---------|-------------|
+{% for assignment in ip_assignments %}
+| {{ assignment.ip }} | {{ assignment.type }} | {% if assignment.type == 'Node' %}[{{ assignment.name }}](../nodes/{{ assignment.name }}/overview.mdx){% elif assignment.type == 'VM' %}[{{ assignment.name }}](../virtual-machines/{{ assignment.vmid }}-{{ assignment.name }}/overview.mdx){% elif assignment.type == 'Container' %}[{{ assignment.name }}](../containers/{{ assignment.vmid }}-{{ assignment.name }}/overview.mdx){% else %}{{ assignment.name }}{% endif %} | {{ assignment.interface|default('N/A') }} | {{ assignment.gateway|default('-') }} | {{ assignment.description }} |
+{% endfor %}
+
+## IP Addresses by Subnet
+
+{% for subnet, assignments in subnets.items() %}
+### {{ subnet }}
+
+**Addresses in subnet:** {{ assignments|length }}
+
+| IP Address | Type | Name | Interface | Gateway |
+|------------|------|------|-----------|---------|
+{% for assignment in assignments %}
+| {{ assignment.ip }} | {{ assignment.type }} | {% if assignment.type == 'Node' %}[{{ assignment.name }}](../nodes/{{ assignment.name }}/overview.mdx){% elif assignment.type == 'VM' %}[{{ assignment.name }}](../virtual-machines/{{ assignment.vmid }}-{{ assignment.name }}/overview.mdx){% elif assignment.type == 'Container' %}[{{ assignment.name }}](../containers/{{ assignment.vmid }}-{{ assignment.name }}/overview.mdx){% else %}{{ assignment.name }}{% endif %} | {{ assignment.interface|default('N/A') }} | {{ assignment.gateway|default('-') }} |
+{% endfor %}
+
+{% endfor %}
+
+## IP Addresses by Type
+
+### Nodes
+
+| Node | IP Address | Interface | Gateway |
+|------|------------|-----------|---------|
+{% for assignment in ip_assignments %}
+{% if assignment.type == 'Node' %}
+| [{{ assignment.name }}](../nodes/{{ assignment.name }}/overview.mdx) | {{ assignment.ip }} | {{ assignment.interface }} | {{ assignment.gateway|default('-') }} |
+{% endif %}
+{% endfor %}
+
+### Virtual Machines
+
+| VM ID | Name | IP Address | Interface | Bridge |
+|-------|------|------------|-----------|--------|
+{% for assignment in ip_assignments %}
+{% if assignment.type == 'VM' %}
+| {{ assignment.vmid }} | [{{ assignment.name }}](../virtual-machines/{{ assignment.vmid }}-{{ assignment.name }}/overview.mdx) | {{ assignment.ip }} | {{ assignment.interface|default('N/A') }} | {{ assignment.bridge|default('-') }} |
+{% endif %}
+{% endfor %}
+
+### Containers
+
+| CT ID | Hostname | IP Address | Interface | Bridge |
+|-------|----------|------------|-----------|--------|
+{% for assignment in ip_assignments %}
+{% if assignment.type == 'Container' %}
+| {{ assignment.vmid }} | [{{ assignment.name }}](../containers/{{ assignment.vmid }}-{{ assignment.name }}/overview.mdx) | {{ assignment.ip }} | {{ assignment.interface|default('N/A') }} | {{ assignment.bridge|default('-') }} |
+{% endif %}
+{% endfor %}
+
+## Related Documentation
+
+- [Network Overview](./index.mdx) - Network configuration
+- [VLAN Configuration](./vlans.mdx) - VLAN details
+- [Cluster Overview](../index.mdx) - Cluster information
+
+---
+
+*Documentation generated: {{ generated }}*
