@@ -14,15 +14,16 @@ logger = logging.getLogger(__name__)
 class NodeOverviewGenerator(BaseDocumentGenerator):
     """Generator for node overview documentation."""
 
-    def __init__(self, api_client, output_dir: Path, node_name: str):
+    def __init__(self, api_client, config, output_dir: Path, node_name: str):
         """Initialize node overview generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             node_name: Name of the node to document
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.node_name = node_name
 
     def collect_data(self) -> Optional[Dict[str, Any]]:
@@ -127,15 +128,16 @@ class NodeOverviewGenerator(BaseDocumentGenerator):
 class NodeHardwareGenerator(BaseDocumentGenerator):
     """Generator for node hardware documentation."""
 
-    def __init__(self, api_client, output_dir: Path, node_name: str):
+    def __init__(self, api_client, config, output_dir: Path, node_name: str):
         """Initialize node hardware generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             node_name: Name of the node to document
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.node_name = node_name
 
     def collect_data(self) -> Optional[Dict[str, Any]]:
@@ -160,6 +162,11 @@ class NodeHardwareGenerator(BaseDocumentGenerator):
             # Extract CPU details
             cpu_info = status.get('cpuinfo', {})
 
+            # Apply CPU flags redaction if configured
+            if 'flags' in cpu_info:
+                cpu_info = cpu_info.copy()
+                cpu_info['flags'] = self.redactor.redact_cpu_flags(cpu_info.get('flags'))
+
             # Extract memory details
             memory_info = status.get('memory', {})
             swap_info = status.get('swap', {})
@@ -167,13 +174,21 @@ class NodeHardwareGenerator(BaseDocumentGenerator):
             # Extract root filesystem
             rootfs = status.get('rootfs', {})
 
+            # Apply disk redaction if configured
+            redacted_disks = []
+            if disks:
+                for disk in disks:
+                    redacted_disks.append(self.redactor.redact_disk_info(disk))
+            else:
+                redacted_disks = []
+
             return {
                 'node_name': self.node_name,
                 'cpu_info': cpu_info,
                 'memory': memory_info,
                 'swap': swap_info,
                 'rootfs': rootfs,
-                'disks': disks if disks else [],
+                'disks': redacted_disks,
                 'pci_devices': pci_devices if pci_devices else [],
             }
 
@@ -194,15 +209,16 @@ class NodeHardwareGenerator(BaseDocumentGenerator):
 class NodeNetworkGenerator(BaseDocumentGenerator):
     """Generator for node network documentation."""
 
-    def __init__(self, api_client, output_dir: Path, node_name: str):
+    def __init__(self, api_client, config, output_dir: Path, node_name: str):
         """Initialize node network generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             node_name: Name of the node to document
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.node_name = node_name
 
     def collect_data(self) -> Optional[Dict[str, Any]]:
@@ -229,21 +245,27 @@ class NodeNetworkGenerator(BaseDocumentGenerator):
             other_interfaces = []
 
             for iface in network:
-                iface_type = iface.get('type', 'unknown')
+                # Apply MAC address redaction
+                redacted_iface = self.redactor.redact_network_interface(iface)
+
+                iface_type = redacted_iface.get('type', 'unknown')
                 if iface_type == 'eth':
-                    physical_interfaces.append(iface)
+                    physical_interfaces.append(redacted_iface)
                 elif iface_type == 'bridge':
-                    bridges.append(iface)
+                    bridges.append(redacted_iface)
                 elif iface_type == 'bond':
-                    bonds.append(iface)
+                    bonds.append(redacted_iface)
                 elif iface_type == 'vlan':
-                    vlans.append(iface)
+                    vlans.append(redacted_iface)
                 else:
-                    other_interfaces.append(iface)
+                    other_interfaces.append(redacted_iface)
+
+            # Also redact the all_interfaces list
+            redacted_all = [self.redactor.redact_network_interface(iface) for iface in network]
 
             return {
                 'node_name': self.node_name,
-                'all_interfaces': network,
+                'all_interfaces': redacted_all,
                 'physical_interfaces': physical_interfaces,
                 'bridges': bridges,
                 'bonds': bonds,

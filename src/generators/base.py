@@ -6,6 +6,8 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from datetime import datetime
 from typing import Dict, Any, Optional
 import logging
+from src.config import ProxmoxConfig
+from src.redaction import Redactor
 
 logger = logging.getLogger(__name__)
 
@@ -13,15 +15,18 @@ logger = logging.getLogger(__name__)
 class BaseDocumentGenerator(ABC):
     """Base class for all documentation generators."""
 
-    def __init__(self, api_client, output_dir: Path):
+    def __init__(self, api_client, config: ProxmoxConfig, output_dir: Path):
         """Initialize generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance with settings
             output_dir: Base output directory path
         """
         self.api = api_client
+        self.config = config
         self.output_dir = Path(output_dir)
+        self.redactor = Redactor(config)
 
         # Set up Jinja2 environment
         template_dir = Path(__file__).parent.parent / 'templates'

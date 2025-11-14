@@ -63,16 +63,17 @@ class ContainerIndexGenerator(BaseDocumentGenerator):
 class ContainerOverviewGenerator(BaseDocumentGenerator):
     """Generator for container overview documentation."""
 
-    def __init__(self, api_client, output_dir: Path, node_name: str, vmid: int):
+    def __init__(self, api_client, config, output_dir: Path, node_name: str, vmid: int):
         """Initialize container overview generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             node_name: Node where container is located
             vmid: Container ID
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.node_name = node_name
         self.vmid = vmid
 
@@ -198,16 +199,17 @@ class ContainerOverviewGenerator(BaseDocumentGenerator):
 class ContainerNetworkGenerator(BaseDocumentGenerator):
     """Generator for container network documentation."""
 
-    def __init__(self, api_client, output_dir: Path, node_name: str, vmid: int):
+    def __init__(self, api_client, config, output_dir: Path, node_name: str, vmid: int):
         """Initialize container network generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             node_name: Node where container is located
             vmid: Container ID
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.node_name = node_name
         self.vmid = vmid
 
@@ -234,13 +236,15 @@ class ContainerNetworkGenerator(BaseDocumentGenerator):
                     iface_data = {'interface': key, 'interface_num': iface_num}
 
                     # Parse network string
-                    # Format: name=eth0,bridge=vmbr0,ip=192.168.1.100/24,gw=192.168.1.1
+                    # Format: name=eth0,bridge=vmbr0,ip=192.168.1.100/24,gw=192.168.1.1,hwaddr=AA:BB:CC:DD:EE:FF
                     parts = value.split(',')
                     for part in parts:
                         if '=' in part:
                             k, v = part.split('=', 1)
                             iface_data[k.strip()] = v.strip()
 
+                    # Apply MAC address redaction
+                    iface_data = self.redactor.redact_network_interface(iface_data)
                     network_interfaces.append(iface_data)
 
             # Sort by interface number
@@ -249,7 +253,10 @@ class ContainerNetworkGenerator(BaseDocumentGenerator):
             # Try to get actual interfaces from container
             container_interfaces = None
             try:
-                container_interfaces = self.api.get(f'/nodes/{self.node_name}/lxc/{self.vmid}/interfaces')
+                container_interfaces_raw = self.api.get(f'/nodes/{self.node_name}/lxc/{self.vmid}/interfaces')
+                # Apply MAC address redaction to container interfaces
+                if container_interfaces_raw:
+                    container_interfaces = [self.redactor.redact_network_interface(iface) for iface in container_interfaces_raw]
             except:
                 pass
 

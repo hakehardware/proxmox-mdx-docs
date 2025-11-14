@@ -140,6 +140,86 @@ output/
 - **Dual Authentication**: Supports API tokens and username/password
 - **Detailed Logging**: Complete logs in `generation.log`
 
+### Public Documentation Mode
+
+- **Granular Redaction**: Control what sensitive data to redact when publishing documentation
+- **Security-First**: Redact MAC addresses, hardware serials, API tokens, CPU flags, usernames, emails
+- **Flexible Control**: Enable/disable each redaction category independently via `.env` file
+- **Safe Defaults**: All redaction disabled by default for complete internal documentation
+
+## Public Documentation / Redaction
+
+When publishing your Proxmox infrastructure documentation publicly (e.g., as guides or buying recommendations), you may want to redact certain sensitive information while keeping the valuable configuration details visible.
+
+### Redaction Categories
+
+The generator supports granular redaction control for 6 categories:
+
+| Category | What Gets Redacted | Affected Documents |
+|----------|-------------------|-------------------|
+| **MAC Addresses** | Network interface MAC addresses → `XX:XX:XX:XX:XX:XX` | Node network, VM network, Container network |
+| **Hardware Serials** | Disk serial numbers and WWN → `REDACTED` | Node hardware |
+| **API Tokens** | Token IDs and associations → `REDACTED` | Users & Permissions |
+| **CPU Flags** | Detailed CPU capabilities → `Available (details redacted)` | Node hardware |
+| **Usernames** | Custom usernames → `user1@realm`, `user2@realm` (preserves root@pam) | Users & Permissions, ACLs |
+| **Email Addresses** | User email addresses → `REDACTED` | Users & Permissions |
+
+### Configuration
+
+Add these flags to your `.env` file:
+
+```bash
+# Recommended for public documentation
+REDACT_MAC_ADDRESSES=true
+REDACT_HARDWARE_SERIALS=true
+REDACT_API_TOKENS=true
+REDACT_CPU_FLAGS=true
+REDACT_USERNAMES=true
+REDACT_EMAIL_ADDRESSES=true
+```
+
+All flags default to `false` for complete internal documentation.
+
+### What's Safe to Publish?
+
+**These are NOT redacted** (safe for public guides):
+- ✅ Internal IP addresses (192.168.x.x, 10.x.x.x)
+- ✅ Network topology and VLAN configuration
+- ✅ Hardware specs (CPU model, RAM, storage capacity)
+- ✅ VM/Container resource allocation
+- ✅ Firewall rules and network config
+- ✅ All your descriptions and documentation notes
+
+**These ARE redacted** (when enabled):
+- ⚠️ MAC addresses (device tracking)
+- ⚠️ Hardware serial numbers (targeted attacks)
+- ⚠️ API token IDs (credential enumeration)
+- ⚠️ CPU vulnerability flags (exploit targeting)
+- ⚠️ Custom usernames (privacy)
+- ⚠️ Email addresses (privacy/spam)
+
+### Usage Example
+
+```bash
+# Generate private documentation (full details)
+REDACT_MAC_ADDRESSES=false python generate_docs.py
+
+# Generate public documentation (redacted)
+cp .env .env.private
+# Edit .env and set all REDACT_* flags to true
+python generate_docs.py
+# Now output/ contains redacted documentation safe for public sharing
+```
+
+### Philosophy
+
+We believe in **transparency over obscurity**. Internal IP addresses and network configurations are safe to publish because:
+- They're behind NAT and firewalls
+- Knowledge of your internal network doesn't enable attacks from outside
+- Sharing configs helps others learn and replicate your setup
+
+However, hardware identifiers and credentials could enable targeted attacks or privacy violations, so those should be redacted.
+
 ## Automation
 
 ### Schedule Regular Updates

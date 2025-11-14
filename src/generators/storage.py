@@ -111,15 +111,16 @@ class StorageIndexGenerator(BaseDocumentGenerator):
 class StoragePoolGenerator(BaseDocumentGenerator):
     """Generator for individual storage pool documentation."""
 
-    def __init__(self, api_client, output_dir: Path, storage_id: str):
+    def __init__(self, api_client, config, output_dir: Path, storage_id: str):
         """Initialize storage pool generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             storage_id: Storage pool ID
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.storage_id = storage_id
 
     def collect_data(self) -> Optional[Dict[str, Any]]:

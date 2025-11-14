@@ -64,6 +64,17 @@ def main():
         logger.info(f"  Host: {config.proxmox_host}")
         logger.info(f"  Auth method: {config.auth_method}")
         logger.info(f"  Output directory: {config.output_dir}")
+
+        # Log redaction settings
+        from src.redaction import Redactor
+        redactor = Redactor(config)
+        if redactor.should_redact_anything():
+            logger.info(f"  Redaction enabled:")
+            for setting in redactor.get_redaction_summary():
+                logger.info(f"    - {setting}")
+        else:
+            logger.info(f"  Redaction: disabled (full documentation mode)")
+
         print()
 
         # Initialize API client
@@ -119,21 +130,21 @@ def main():
         # Build list of generators
         generators = [
             # Cluster overview
-            ClusterOverviewGenerator(api, config.output_dir),
+            ClusterOverviewGenerator(api, config, config.output_dir),
         ]
 
         # Add node generators for each node
         for node_name in node_names:
             generators.extend([
-                NodeOverviewGenerator(api, config.output_dir, node_name),
-                NodeHardwareGenerator(api, config.output_dir, node_name),
-                NodeNetworkGenerator(api, config.output_dir, node_name),
+                NodeOverviewGenerator(api, config, config.output_dir, node_name),
+                NodeHardwareGenerator(api, config, config.output_dir, node_name),
+                NodeNetworkGenerator(api, config, config.output_dir, node_name),
             ])
 
         # Add VM generators
         if vms:
             # VM index
-            generators.append(VMIndexGenerator(api, config.output_dir))
+            generators.append(VMIndexGenerator(api, config, config.output_dir))
 
             # Per-VM generators
             for vm in vms:
@@ -141,9 +152,9 @@ def main():
                 node_name = vm.get('node')
                 if vmid and node_name:
                     generators.extend([
-                        VMOverviewGenerator(api, config.output_dir, node_name, vmid),
-                        VMNetworkGenerator(api, config.output_dir, node_name, vmid),
-                        VMStorageGenerator(api, config.output_dir, node_name, vmid),
+                        VMOverviewGenerator(api, config, config.output_dir, node_name, vmid),
+                        VMNetworkGenerator(api, config, config.output_dir, node_name, vmid),
+                        VMStorageGenerator(api, config, config.output_dir, node_name, vmid),
                     ])
 
         # Get list of containers
@@ -162,7 +173,7 @@ def main():
         # Add container generators
         if containers:
             # Container index
-            generators.append(ContainerIndexGenerator(api, config.output_dir))
+            generators.append(ContainerIndexGenerator(api, config, config.output_dir))
 
             # Per-container generators
             for ct in containers:
@@ -170,8 +181,8 @@ def main():
                 node_name = ct.get('node')
                 if vmid and node_name:
                     generators.extend([
-                        ContainerOverviewGenerator(api, config.output_dir, node_name, vmid),
-                        ContainerNetworkGenerator(api, config.output_dir, node_name, vmid),
+                        ContainerOverviewGenerator(api, config, config.output_dir, node_name, vmid),
+                        ContainerNetworkGenerator(api, config, config.output_dir, node_name, vmid),
                     ])
 
         # Get list of storage pools
@@ -188,32 +199,32 @@ def main():
         # Add storage generators
         if storage_ids:
             # Storage index
-            generators.append(StorageIndexGenerator(api, config.output_dir))
+            generators.append(StorageIndexGenerator(api, config, config.output_dir))
 
             # Per-storage generators
             for storage_id in storage_ids:
-                generators.append(StoragePoolGenerator(api, config.output_dir, storage_id))
+                generators.append(StoragePoolGenerator(api, config, config.output_dir, storage_id))
 
             # Storage assignments
-            generators.append(StorageAssignmentsGenerator(api, config.output_dir))
+            generators.append(StorageAssignmentsGenerator(api, config, config.output_dir))
 
         # Add network generators
         logger.info("Adding network documentation generators...")
         generators.extend([
-            NetworkOverviewGenerator(api, config.output_dir),
-            IPAddressingGenerator(api, config.output_dir),
-            VLANGenerator(api, config.output_dir),
-            SDNGenerator(api, config.output_dir),
+            NetworkOverviewGenerator(api, config, config.output_dir),
+            IPAddressingGenerator(api, config, config.output_dir),
+            VLANGenerator(api, config, config.output_dir),
+            SDNGenerator(api, config, config.output_dir),
         ])
         print()
 
         # Add reference generators
         logger.info("Adding reference documentation generators...")
         generators.extend([
-            FirewallGenerator(api, config.output_dir),
-            UsersPermissionsGenerator(api, config.output_dir),
-            BackupPoliciesGenerator(api, config.output_dir),
-            HAGenerator(api, config.output_dir),
+            FirewallGenerator(api, config, config.output_dir),
+            UsersPermissionsGenerator(api, config, config.output_dir),
+            BackupPoliciesGenerator(api, config, config.output_dir),
+            HAGenerator(api, config, config.output_dir),
         ])
         print()
 

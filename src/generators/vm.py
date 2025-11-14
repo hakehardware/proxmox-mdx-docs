@@ -60,16 +60,17 @@ class VMIndexGenerator(BaseDocumentGenerator):
 class VMOverviewGenerator(BaseDocumentGenerator):
     """Generator for VM overview documentation."""
 
-    def __init__(self, api_client, output_dir: Path, node_name: str, vmid: int):
+    def __init__(self, api_client, config, output_dir: Path, node_name: str, vmid: int):
         """Initialize VM overview generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             node_name: Node where VM is located
             vmid: VM ID
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.node_name = node_name
         self.vmid = vmid
 
@@ -157,16 +158,17 @@ class VMOverviewGenerator(BaseDocumentGenerator):
 class VMNetworkGenerator(BaseDocumentGenerator):
     """Generator for VM network documentation."""
 
-    def __init__(self, api_client, output_dir: Path, node_name: str, vmid: int):
+    def __init__(self, api_client, config, output_dir: Path, node_name: str, vmid: int):
         """Initialize VM network generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             node_name: Node where VM is located
             vmid: VM ID
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.node_name = node_name
         self.vmid = vmid
 
@@ -193,6 +195,8 @@ class VMNetworkGenerator(BaseDocumentGenerator):
                     parsed = parse_network_string(value)
                     parsed['interface'] = key
                     parsed['interface_num'] = iface_num
+                    # Apply MAC address redaction
+                    parsed = self.redactor.redact_network_interface(parsed)
                     network_interfaces.append(parsed)
 
             # Sort by interface number
@@ -201,7 +205,13 @@ class VMNetworkGenerator(BaseDocumentGenerator):
             # Try to get guest agent network info (may not be available)
             guest_network = None
             try:
-                guest_network = self.api.get(f'/nodes/{self.node_name}/qemu/{self.vmid}/agent/network-get-interfaces')
+                guest_network_raw = self.api.get(f'/nodes/{self.node_name}/qemu/{self.vmid}/agent/network-get-interfaces')
+                # Apply MAC address redaction to guest network interfaces
+                if guest_network_raw and 'result' in guest_network_raw:
+                    guest_network = guest_network_raw.copy()
+                    guest_network['result'] = [self.redactor.redact_network_interface(iface) for iface in guest_network_raw.get('result', [])]
+                else:
+                    guest_network = guest_network_raw
             except:
                 pass
 
@@ -237,16 +247,17 @@ class VMNetworkGenerator(BaseDocumentGenerator):
 class VMStorageGenerator(BaseDocumentGenerator):
     """Generator for VM storage documentation."""
 
-    def __init__(self, api_client, output_dir: Path, node_name: str, vmid: int):
+    def __init__(self, api_client, config, output_dir: Path, node_name: str, vmid: int):
         """Initialize VM storage generator.
 
         Args:
             api_client: ProxmoxAPIClient instance
+            config: ProxmoxConfig instance
             output_dir: Base output directory
             node_name: Node where VM is located
             vmid: VM ID
         """
-        super().__init__(api_client, output_dir)
+        super().__init__(api_client, config, output_dir)
         self.node_name = node_name
         self.vmid = vmid
 

@@ -28,6 +28,14 @@ class ProxmoxConfig:
         self.include_descriptions: bool = True
         self.include_tags: bool = True
 
+        # Redaction settings for public documentation
+        self.redact_mac_addresses: bool = os.getenv('REDACT_MAC_ADDRESSES', 'false').lower() == 'true'
+        self.redact_hardware_serials: bool = os.getenv('REDACT_HARDWARE_SERIALS', 'false').lower() == 'true'
+        self.redact_api_tokens: bool = os.getenv('REDACT_API_TOKENS', 'false').lower() == 'true'
+        self.redact_cpu_flags: bool = os.getenv('REDACT_CPU_FLAGS', 'false').lower() == 'true'
+        self.redact_usernames: bool = os.getenv('REDACT_USERNAMES', 'false').lower() == 'true'
+        self.redact_email_addresses: bool = os.getenv('REDACT_EMAIL_ADDRESSES', 'false').lower() == 'true'
+
         # Validate required settings
         self._validate()
 

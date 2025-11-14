@@ -137,26 +137,40 @@ class UsersPermissionsGenerator(BaseDocumentGenerator):
                     except:
                         pass
 
-            # Group users by realm
+            # Apply redaction to users, tokens, and ACLs
+            redacted_users = [self.redactor.redact_user_info(user) for user in users] if users else []
+            redacted_tokens = [self.redactor.redact_token_info(token) for token in api_tokens]
+
+            # Group users by realm (after redaction)
             users_by_realm = {}
-            for user in users:
-                realm = userid.split('@')[1] if '@' in user.get('userid', '') else 'unknown'
+            for user in redacted_users:
+                userid = user.get('userid', '')
+                realm = userid.split('@')[1] if '@' in userid else 'unknown'
                 if realm not in users_by_realm:
                     users_by_realm[realm] = []
                 users_by_realm[realm].append(user)
 
+            # Apply redaction to ACLs (for usernames in ACL paths)
+            redacted_acls = []
+            for acl in acls if acls else []:
+                redacted_acl = acl.copy()
+                # ACLs may have 'ugid' field with usernames
+                if 'ugid' in redacted_acl:
+                    redacted_acl['ugid'] = self.redactor.redact_username(redacted_acl['ugid'])
+                redacted_acls.append(redacted_acl)
+
             return {
-                'users': users if users else [],
+                'users': redacted_users,
                 'groups': groups if groups else [],
                 'roles': roles if roles else [],
-                'acls': acls if acls else [],
-                'api_tokens': api_tokens,
+                'acls': redacted_acls,
+                'api_tokens': redacted_tokens,
                 'users_by_realm': users_by_realm,
-                'total_users': len(users) if users else 0,
+                'total_users': len(redacted_users),
                 'total_groups': len(groups) if groups else 0,
                 'total_roles': len(roles) if roles else 0,
-                'total_acls': len(acls) if acls else 0,
-                'total_tokens': len(api_tokens),
+                'total_acls': len(redacted_acls),
+                'total_tokens': len(redacted_tokens),
             }
 
         except Exception as e:
